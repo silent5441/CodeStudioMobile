@@ -768,6 +768,8 @@ We never collect your code, file or project names, which features you use, or an
     <string name="settings_plugins_subtitle">Enable or disable built-in plugins</string>
     <string name="settings_storage">Storage</string>
     <string name="settings_storage_subtitle">See what's using space and free it up</string>
+    <string name="settings_dev_hub">Developer Hub</string>
+    <string name="settings_dev_hub_subtitle">Snippets &amp; dependency reference</string>
     <string name="storage_total_used">Total used</string>
     <string name="storage_clear">Clear</string>
     <string name="storage_clear_all_caches">Clear all caches</string>
@@ -1269,6 +1271,5 @@ We never collect your code, file or project names, which features you use, or an
     <string name="block_palette_while">While</string>
     <string name="block_palette_return">Return</string>
     <string name="block_palette_variable">Variable</string>
-    <string name="block_palette_call">Call</string>
-    <string name="block_palette_comment">Comment</string>
+
 </resources>

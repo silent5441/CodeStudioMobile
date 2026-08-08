@@ -14,6 +14,8 @@ dependencies {
     // The shared backend + UI port (ide-core api-exposes :ide-ui). The desktop launcher adds only its
     // Compose-window main() on top. The framework impls come transitively from :ide-core.
     implementation(project(":ide-core"))
+    // DevHub store for the desktop launcher (:hub-ui's screens reach it via :ide-ui's implementation dep).
+    implementation(project(":hub"))
 
     // The Compose @Preview render surface (the interpreter's render half): on desktop it drives Compose for
     // Desktop, so a @Preview using standard material/foundation composables renders live (the same bridge

@@ -1273,4 +1273,6 @@
     <string name="block_palette_variable">变量</string>
     <string name="block_palette_call">调用</string>
     <string name="block_palette_comment">注释</string>
+    <string name="settings_dev_hub">开发者工具库</string>
+    <string name="settings_dev_hub_subtitle">代码片段与依赖参考</string>
 </resources>

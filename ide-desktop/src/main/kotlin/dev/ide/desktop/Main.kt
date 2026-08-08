@@ -47,6 +47,10 @@ fun main(args: Array<String>) {
                 // Live @Preview rendering on desktop: the interpreter drives Compose for Desktop (see
                 // DesktopComposePreviewHost). The backend instance is stable across project switches.
                 composePreviewHost = DesktopComposePreviewHost(backend),
+                // DevHub's file-backed store under ~/.codeassist/devhub.
+                hubStore = dev.ide.hub.HubStoreImpl(
+                    java.io.File(System.getProperty("user.home"), ".codeassist/devhub"),
+                ),
             )
         }
     }

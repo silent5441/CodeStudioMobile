@@ -37,6 +37,9 @@ kotlin {
             // The IdeBackend port + DTOs + UI-contribution model live in :ide-ui-api; `api` re-exposes them so
             // :ide-core (which depends on :ide-ui) keeps seeing them transitively without a build change.
             api(project(":ide-ui-api"))
+            // DevHub — snippets & dependency reference (its screen set is self-contained; the shell decides
+            // whether to surface it based on a HubStore being provided at the top level).
+            implementation(project(":hub-ui"))
             implementation(compose.runtime)
             implementation(compose.foundation)
             implementation(compose.material3)

@@ -1037,4 +1037,6 @@ Kami tidak pernah mengumpulkan kode, nama file atau proyek Anda, fitur apa yang 
     <string name="block_palette_variable">Variabel</string>
     <string name="block_palette_call">Panggil</string>
     <string name="block_palette_comment">Komentar</string>
+    <string name="settings_dev_hub">Hub Pengembang</string>
+    <string name="settings_dev_hub_subtitle">Cuplikan kode dan referensi dependensi</string>
 </resources>

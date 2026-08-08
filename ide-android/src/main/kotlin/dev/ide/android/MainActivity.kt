@@ -223,6 +223,8 @@ class MainActivity : ComponentActivity() {
                     // instance is stable across project switches (it swaps services internally), so one host suffices.
                     composePreviewHost = (b as? IdeServicesBackend)?.let { AndroidComposePreviewHost(it) },
                     importPackagePath = importPackagePath,
+                    // DevHub's file-backed store (catalog + favorites live in filesDir/devhub).
+                    hubStore = dev.ide.hub.HubStoreImpl(File(filesDir, "devhub")),
                 )
 
                 error != null -> Splash("Failed to start: $error")

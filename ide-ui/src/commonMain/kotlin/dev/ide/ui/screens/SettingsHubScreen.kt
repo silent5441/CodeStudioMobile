@@ -52,6 +52,8 @@ import dev.ide.ui.generated.resources.settings_settings
 import dev.ide.ui.generated.resources.settings_settings_subtitle
 import dev.ide.ui.generated.resources.settings_storage
 import dev.ide.ui.generated.resources.settings_storage_subtitle
+import dev.ide.ui.generated.resources.settings_dev_hub
+import dev.ide.ui.generated.resources.settings_dev_hub_subtitle
 import dev.ide.ui.icons.CaIcons
 import org.jetbrains.compose.resources.stringResource
 
@@ -72,6 +74,7 @@ fun SettingsHubScreen(
     onOpenKeystoreManager: () -> Unit,
     onOpenPlugins: () -> Unit,
     onOpenStorage: () -> Unit,
+    onOpenDevHub: (() -> Unit)? = null,
 ) {
     val scroll = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
@@ -94,15 +97,22 @@ fun SettingsHubScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            val rows = listOf(
-                HubDest(CaIcons.gear, stringResource(Res.string.settings_settings), stringResource(Res.string.settings_settings_subtitle), onOpenGlobalSettings),
-                HubDest(CaIcons.braces, stringResource(Res.string.settings_code_style), stringResource(Res.string.settings_code_style_subtitle), onOpenCodeStyle),
-                HubDest(CaIcons.grid, stringResource(Res.string.settings_symbols), stringResource(Res.string.settings_symbols_subtitle), onOpenSymbols),
-                HubDest(CaIcons.pkg, stringResource(Res.string.settings_sdk_manager), stringResource(Res.string.settings_sdk_manager_subtitle), onOpenSdkManager),
-                HubDest(CaIcons.key, stringResource(Res.string.settings_keystore_manager), stringResource(Res.string.settings_keystore_manager_subtitle), onOpenKeystoreManager),
-                HubDest(CaIcons.box, stringResource(Res.string.settings_plugins), stringResource(Res.string.settings_plugins_subtitle), onOpenPlugins),
-                HubDest(CaIcons.layers, stringResource(Res.string.settings_storage), stringResource(Res.string.settings_storage_subtitle), onOpenStorage),
-            )
+            val rows = buildList {
+                if (onOpenDevHub != null) add(
+                    HubDest(CaIcons.grid, stringResource(Res.string.settings_dev_hub), stringResource(Res.string.settings_dev_hub_subtitle), onOpenDevHub),
+                )
+                addAll(
+                    listOf(
+                        HubDest(CaIcons.gear, stringResource(Res.string.settings_settings), stringResource(Res.string.settings_settings_subtitle), onOpenGlobalSettings),
+                        HubDest(CaIcons.braces, stringResource(Res.string.settings_code_style), stringResource(Res.string.settings_code_style_subtitle), onOpenCodeStyle),
+                        HubDest(CaIcons.grid, stringResource(Res.string.settings_symbols), stringResource(Res.string.settings_symbols_subtitle), onOpenSymbols),
+                        HubDest(CaIcons.pkg, stringResource(Res.string.settings_sdk_manager), stringResource(Res.string.settings_sdk_manager_subtitle), onOpenSdkManager),
+                        HubDest(CaIcons.key, stringResource(Res.string.settings_keystore_manager), stringResource(Res.string.settings_keystore_manager_subtitle), onOpenKeystoreManager),
+                        HubDest(CaIcons.box, stringResource(Res.string.settings_plugins), stringResource(Res.string.settings_plugins_subtitle), onOpenPlugins),
+                        HubDest(CaIcons.layers, stringResource(Res.string.settings_storage), stringResource(Res.string.settings_storage_subtitle), onOpenStorage),
+                    ),
+                )
+            }
             Card(
                 Modifier.widthIn(max = 640.dp).fillMaxWidth().padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 24.dp),
                 shape = MaterialTheme.shapes.large,

@@ -183,6 +183,30 @@ object CaIcons {
         roundRect(13f, 13f, 7f, 7f, 1.8f),
     )
 
+    // ---- DevHub navigation + content icons ----
+    /** A house — the DevHub home destination. */
+    val home = build("home", s("M4 11.5l8 -7 8 7"), s("M6 9.5V19h4v-5h4v5h4V9.5"))
+
+    /** A compass — the DevHub explore destination. */
+    val compass = build(
+        "compass",
+        circle(12f, 12f, 8.5f),
+        s("M15.2 8.8l-1.9 4.5-4.5 1.9 1.9-4.5z"),
+    )
+
+    /** A funnel — filtering search results. */
+    val filter = build("filter", s("M5 6h14M8 12h8M11 18h2"))
+
+    /** The filled heart — favorite state (pairs with [heart]). */
+    val heartFill = build(
+        "heart-fill",
+        f(
+            "M12 20.3 c-.35 0-.7 -.13 -.97 -.4 C6.8 16.1 4 13.4 4 10.1 4 7.7 5.9 5.8 8.3 5.8" +
+                " c1.45 0 2.8 .68 3.7 1.83 .9 -1.15 2.25 -1.83 3.7 -1.83 C18.1 5.8 20 7.7 20 10.1" +
+                " c0 3.3 -2.8 6 -7.03 9.8 -.27 .27 -.62 .4 -.97 .4 z",
+        ),
+    )
+
     // ---- file-tree node icons (resolved by TreeIcons) ----
     /** A package: a square divided into a grid. */
     val pkg = build("pkg", roundRect(4.5f, 4.5f, 15f, 15f, 2.5f), s("M12 4.5v15M4.5 12h15"))

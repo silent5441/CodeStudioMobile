@@ -1084,4 +1084,6 @@
         <item quantity="other">%1$d версий разрешено автоматически (приоритет у новейшей версии)</item>
     </plurals>
 
+    <string name="settings_dev_hub">Центр разработчика</string>
+    <string name="settings_dev_hub_subtitle">Фрагменты кода и справочник зависимостей</string>
 </resources>

@@ -1144,4 +1144,6 @@ Nunca recopilamos su código, nombres de archivos o proyectos, qué funciones us
     <string name="block_palette_variable">Variable</string>
     <string name="block_palette_call">Llamada</string>
     <string name="block_palette_comment">Comentario</string>
+    <string name="settings_dev_hub">Centro de desarrolladores</string>
+    <string name="settings_dev_hub_subtitle">Fragmentos de código y referencia de dependencias</string>
 </resources>

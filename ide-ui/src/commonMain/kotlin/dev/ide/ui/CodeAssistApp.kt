@@ -28,6 +28,13 @@ import dev.ide.ui.ads.LocalAds
 import dev.ide.ui.backend.AdHost
 import dev.ide.ui.backend.FileActions
 import dev.ide.ui.backend.IdeBackend
+import dev.ide.hub.HubStore
+import dev.ide.hub.model.DependencyInfo
+import dev.ide.hub.model.Snippet
+import dev.ide.hub.ui.DependencyDetailScreen
+import dev.ide.hub.ui.DevHubScreen
+import dev.ide.hub.ui.DevHubState
+import dev.ide.hub.ui.SnippetDetailScreen
 import dev.ide.ui.components.BetaInfo
 import dev.ide.ui.components.OnboardingSheet
 import dev.ide.ui.generated.resources.Res
@@ -110,6 +117,9 @@ fun CodeAssistApp(
     /** A `.caproj` path handed in from outside the app (Android "Open with"). When it changes to a
      *  non-null value, the import preview opens for it. Null on desktop / normal launch. */
     importPackagePath: String? = null,
+    /** The DevHub data store. When present, the Developer Hub (snippets & dependency reference) is
+     *  reachable from the Settings & Tools hub; the shell owns the store's lifecycle. */
+    hubStore: HubStore? = null,
 ) {
     // Register the UI facets of the enabled plugins, then load once. The backend reports exactly the plugins
     // whose engine half is enabled (see BuiltInPlugins' unified engine+UI declaration), so this shell code names
@@ -159,6 +169,11 @@ fun CodeAssistApp(
     // hidden when no project is open (and must never navigate into one). NOT `epoch > 0`: that stays true after
     // a project is closed back to the picker, which is exactly when the row must not show.
     var keystoreInProject by remember { mutableStateOf(false) }
+    // DevHub: the state holder for the snippet/dependency hub (lives as long as a store is provided), plus
+    // the snippet/dependency the user opened on its detail screens.
+    val hubState = remember(hubStore) { hubStore?.let { DevHubState(it) } }
+    var hubSnippet by remember { mutableStateOf<Snippet?>(null) }
+    var hubDependency by remember { mutableStateOf<DependencyInfo?>(null) }
     var showMigration by remember { mutableStateOf(backend.settings.preference("migration.acknowledged") != "true") }
     var showLegacyRecovery by remember { mutableStateOf(backend.settings.preference("legacy.recovery.seen") != "true") }
     var showOnboarding by remember { mutableStateOf(backend.settings.preference("onboarding.seen") != "true") }
@@ -395,6 +410,9 @@ fun CodeAssistApp(
                 screen == Screen.KeystoreManager -> screen = keystoreReturn
                 // The hub returns to wherever it was opened from (picker or editor).
                 screen == Screen.Hub -> screen = hubReturn
+                // DevHub was opened from the hub; its detail screens step back through the shell first.
+                screen == Screen.DevHub -> screen = hubReturn
+                screen == Screen.DevHubSnippet || screen == Screen.DevHubDependency -> screen = Screen.DevHub
 
                 screen == Screen.Run || screen == Screen.ModuleConfig -> screen = Screen.Editor
 
@@ -692,7 +710,38 @@ fun CodeAssistApp(
                             onOpenKeystoreManager = { keystoreReturn = Screen.Hub; keystoreInProject = hubReturn == Screen.Editor; screen = Screen.KeystoreManager },
                             onOpenPlugins = { screen = Screen.Plugins },
                             onOpenStorage = { screen = Screen.Storage },
+                            onOpenDevHub = if (hubState != null) {
+                                { screen = Screen.DevHub }
+                            } else null,
                         )
+
+                        // DevHub — the on-device snippet & dependency reference (wired only when a store exists).
+                        Screen.DevHub -> hubState?.let { state ->
+                            DevHubScreen(
+                                state = state,
+                                onClose = { screen = hubReturn },
+                                onOpenSnippet = { s -> hubSnippet = s; screen = Screen.DevHubSnippet },
+                                onOpenDependency = { d -> hubDependency = d; screen = Screen.DevHubDependency },
+                                onShareText = null,
+                            )
+                        }
+                        Screen.DevHubSnippet -> hubSnippet?.let { s ->
+                            hubState?.let { state ->
+                                SnippetDetailScreen(
+                                    snippet = s,
+                                    state = state,
+                                    onBack = { screen = Screen.DevHub },
+                                    onOpenDependency = { d -> hubDependency = d; screen = Screen.DevHubDependency },
+                                    onShareText = null,
+                                )
+                            }
+                        }
+                        Screen.DevHubDependency -> hubDependency?.let { d ->
+                            DependencyDetailScreen(
+                                dep = d,
+                                onBack = { screen = Screen.DevHub },
+                            )
+                        }
 
                         // Settings — reached from the hub. With a project open (hub entered from the editor) the
                         // project-scoped pages (dependency conflicts, inspections) merge in; from the picker only

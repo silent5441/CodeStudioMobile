@@ -785,6 +785,9 @@ configurations.configureEach {
 
 dependencies {
     implementation(project(":ide-ui"))
+    // DevHub file-backed store (the UI + data layer come transitively via :ide-ui → :hub-ui; :hub itself
+    // is jvmShared-transitive from :hub-ui's `api`).
+    implementation(project(":hub"))
 
     // The real on-device IDE engine, shared with :ide-desktop. ide-core pulls in lang-jdt (jdt.core +
     // ecj) transitively along with the Eclipse platform runtime jars (org.eclipse.core.runtime, etc.).

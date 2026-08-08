@@ -1113,4 +1113,6 @@ Nunca coletamos seu código, nomes de arquivos ou projetos, quais recursos você
         <item quantity="one">%1$d arquivo</item>
         <item quantity="other">%1$d arquivos</item>
     </plurals>
+    <string name="settings_dev_hub">Hub de desenvolvedores</string>
+    <string name="settings_dev_hub_subtitle">Trechos de código e referência de dependências</string>
 </resources>

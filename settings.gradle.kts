@@ -92,6 +92,7 @@ include(
     ":deps-impl",
     ":analytics-api", // opt-in usage-analytics SPI (event model + AnalyticsService/AnalyticsSink ports)
     ":analytics-impl", // the engine: durable batch buffer + Supabase PostgREST sink + scrubbed crash reporter
+    ":hub", // DevHub data layer: snippet/dependency catalogs, offline JSON cache, favorites, remote sync
     ":block-api",
     ":block-impl",
     ":plugin-api",  // UI extensibility SPI: the lean action model (IdeAction/ActionGroup + places) + EPs
@@ -114,6 +115,7 @@ if (System.getenv("CI_CORE_ONLY") != "true") {
         ":interp-compose", // Compose bridge + render surface (KMP: desktop+android) — needs the Compose plugin
         ":ide-ui-api", // neutral IdeBackend port + DTOs + UI-contribution model, shared by :ide-ui and :ide-core
         ":ide-ui",
+        ":hub-ui", // DevHub UI (Compose Multiplatform): shell + snippet/dependency detail screens
         ":agent-ui", // the AI agent's Compose UI as a self-contained plugin module (chat panel + provider sheet + permission overlay)
         ":ide-core",
         ":ide-desktop",

@@ -1183,4 +1183,6 @@
     <string name="block_palette_variable">متغيّر</string>
     <string name="block_palette_call">استدعاء</string>
     <string name="block_palette_comment">تعليق</string>
+    <string name="settings_dev_hub">مركز المطورين</string>
+    <string name="settings_dev_hub_subtitle">مقتطفات أكواد ودليل الاعتماديات</string>
 </resources>
