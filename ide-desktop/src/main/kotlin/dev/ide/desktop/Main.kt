@@ -48,9 +48,7 @@ fun main(args: Array<String>) {
                 // DesktopComposePreviewHost). The backend instance is stable across project switches.
                 composePreviewHost = DesktopComposePreviewHost(backend),
                 // DevHub's file-backed store under ~/.codeassist/devhub.
-                hubStore = dev.ide.hub.HubStoreImpl(
-                    java.io.File(System.getProperty("user.home"), ".codeassist/devhub"),
-                ),
+                hubDataDir = java.io.File(System.getProperty("user.home"), ".codeassist/devhub").path,
             )
         }
     }

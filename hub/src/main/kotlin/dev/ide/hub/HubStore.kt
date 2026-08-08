@@ -63,4 +63,7 @@ interface HubStore {
 
     /** Pull the remote catalog and merge it into the local cache. Returns true when remote data is present. */
     suspend fun syncNow(): SyncResult
+
+    /** Adopt an externally-provided catalog (seed fallback), persisting it for offline use. */
+    fun importSeed(text: String)
 }

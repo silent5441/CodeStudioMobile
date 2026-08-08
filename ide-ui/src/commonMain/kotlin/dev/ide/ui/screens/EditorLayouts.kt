@@ -271,6 +271,8 @@ internal fun ExpandedLayout(
     onOpenModuleConfig: (String?) -> Unit,
     onCloseProject: () -> Unit,
     fileActions: FileActions,
+    onOpenAgent: (() -> Unit)? = null,
+    onOpenDevHub: (() -> Unit)? = null,
 ) {
     val project = state.backend.project
     val leftPanels = buildLeftPanels(
@@ -366,7 +368,7 @@ internal fun ExpandedLayout(
                 )
             }
         }
-        DestinationSheets(state, compact = false, onOpenModuleConfig, onToggleTheme, onOpenHub, onCloseProject, fileActions)
+        DestinationSheets(state, compact = false, onOpenModuleConfig, onToggleTheme, onOpenHub, onCloseProject, fileActions, onOpenAgent, onOpenDevHub)
         PaletteOverlay(state, onToggleTheme, onOpenHub, onOpenDependencies)
     }
 }
@@ -393,6 +395,8 @@ internal fun CompactLayout(
     onOpenModuleConfig: (String?) -> Unit,
     onCloseProject: () -> Unit,
     fileActions: FileActions,
+    onOpenAgent: (() -> Unit)? = null,
+    onOpenDevHub: (() -> Unit)? = null,
 ) {
     // Hide the bottom nav while the soft keyboard is up, so the editor gets the full height and the user can
     // focus on the code being typed (the nav is one swipe/back away). The IME inset is read raw — directly,
@@ -503,10 +507,12 @@ internal fun CompactLayout(
             }
         }
 
-        DestinationSheets(state, compact = true, onOpenModuleConfig, onToggleTheme, onOpenHub, onCloseProject, fileActions)
+        DestinationSheets(state, compact = true, onOpenModuleConfig, onToggleTheme, onOpenHub, onCloseProject, fileActions, onOpenAgent, onOpenDevHub)
         PaletteOverlay(state, onToggleTheme, onOpenHub, onOpenDependencies)
         // Right-edge tool-window drawer (the phone counterpart of the desktop right pane + rail). Self-gates on
-        // there being a RIGHT tool window, so it lays down nothing when no plugin contributes one.
-        RightToolOverlay(state)
+        // there being a RIGHT tool window, so it lays down nothing when no plugin contributes one. On phones,
+        // the leftward edge swipe is re-homed to DevHub when the host provides a handler — the AI chat stays on
+        // the "More" menu — so the gesture fires [onSwipeOpen] instead of opening the drawer.
+        RightToolOverlay(state, onSwipeOpen = onOpenDevHub)
     }
 }

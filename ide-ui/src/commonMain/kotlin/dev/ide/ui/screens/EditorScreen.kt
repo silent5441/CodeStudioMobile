@@ -65,6 +65,8 @@ fun EditorScreen(
     onCloseProject: () -> Unit = {},
     onOpenRun: () -> Unit = {},
     fileActions: FileActions = FileActions.None,
+    onOpenAgent: (() -> Unit)? = null,
+    onOpenDevHub: (() -> Unit)? = null,
 ) {
     val indexStatus by state.backend.search.indexStatus.collectAsState()
     val buildState by state.backend.build.buildState.collectAsState()
@@ -136,7 +138,9 @@ fun EditorScreen(
                 onOpenDependencies,
                 onOpenModuleConfig,
                 onCloseProject,
-                fileActions
+                fileActions,
+                onOpenAgent,
+                onOpenDevHub
             )
             else ExpandedLayout(
                 state,
@@ -152,7 +156,9 @@ fun EditorScreen(
                 onOpenDependencies,
                 onOpenModuleConfig,
                 onCloseProject,
-                fileActions
+                fileActions,
+                onOpenAgent,
+                onOpenDevHub
             )
         }
         NewEntryDialog(

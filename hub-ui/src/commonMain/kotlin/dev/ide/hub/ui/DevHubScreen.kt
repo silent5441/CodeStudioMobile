@@ -1,6 +1,7 @@
 package dev.ide.hub.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -101,6 +102,36 @@ fun DevHubScreen(
     LaunchedEffect(Unit) { state.load() }
 
     Column(modifier.fillMaxSize()) {
+        // Screen header: the hub is a full-screen destination, so a consistent bar with the close affordance.
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+        ) {
+            Icon(
+                imageVector = CaIcons.chevronLeft,
+                contentDescription = "Close",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .clickable(onClick = onClose)
+                    .padding(8.dp),
+            )
+            Text(
+                "Developer Hub",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.weight(1f))
+            // The active destination, so the header reads as part of the shell (not a second app).
+            Text(
+                dest.label,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 12.dp),
+            )
+        }
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
         Box(Modifier.weight(1f)) {
             val catalog = state.catalog
             when {
@@ -317,7 +348,10 @@ private fun SearchContent(
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(horizontal = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
         ) {
             ALL_LANGUAGE_FILTERS.forEach { lang ->
                 HubChip(
@@ -333,7 +367,10 @@ private fun SearchContent(
         if (categories.isNotEmpty()) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 categories.take(8).forEach { c ->
                     HubChip(

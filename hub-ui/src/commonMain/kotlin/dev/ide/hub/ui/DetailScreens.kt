@@ -99,13 +99,13 @@ fun SnippetDetailScreen(
                     }
                     .padding(8.dp),
             )
-            Text(
-                "Back",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
+            Icon(
+                imageVector = CaIcons.chevronLeft,
+                contentDescription = "Back",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .clickable(onClick = onBack)
-                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                    .padding(8.dp),
             )
         }
         HorizontalDivider()
@@ -241,13 +241,13 @@ fun DependencyDetailScreen(
                 modifier = Modifier.padding(start = 8.dp),
             )
             Spacer(Modifier.weight(1f))
-            Text(
-                "Back",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
+            Icon(
+                imageVector = CaIcons.chevronLeft,
+                contentDescription = "Back",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier
                     .clickable(onClick = onBack)
-                    .padding(12.dp),
+                    .padding(8.dp),
             )
         }
         HorizontalDivider()

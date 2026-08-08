@@ -12,9 +12,14 @@ import kotlinx.coroutines.withContext
 
 /**
  * The DevHub UI state holder. Hosts a [HubStore], remembers the loaded [HubCatalog] plus load/error
- * states, and funnels favorite/sync actions so every screen sees the same data.
+ * states, and funnels favorite/sync actions so every screen sees the same data. When the store's own
+ * offline seed is missing (a platform packaging gap), [seedProvider] supplies the bundled catalog text
+ * and [load] imports it before the first read.
  */
-class DevHubState(private val store: HubStore) {
+class DevHubState(
+    private val store: HubStore,
+    private val seedProvider: (suspend () -> String?)? = null,
+) {
 
     var catalog by mutableStateOf<HubCatalog?>(null)
         private set
@@ -39,7 +44,15 @@ class DevHubState(private val store: HubStore) {
         loading = true
         error = null
         try {
-            catalog = withContext(Dispatchers.IO) { store.catalog() }
+            var c = withContext(Dispatchers.IO) { store.catalog() }
+            if (c.snippets.isEmpty() && c.dependencies.isEmpty() && seedProvider != null) {
+                val seed = seedProvider()
+                if (seed != null) {
+                    withContext(Dispatchers.IO) { store.importSeed(seed) }
+                    c = withContext(Dispatchers.IO) { store.catalog() }
+                }
+            }
+            catalog = c
         } catch (e: Exception) {
             error = e.message ?: "Failed to load catalog"
         } finally {

@@ -65,7 +65,7 @@ private val FlingCommit = 320.dp
  * animate the same value.
  */
 @Composable
-internal fun RightToolOverlay(state: IdeUiState) {
+internal fun RightToolOverlay(state: IdeUiState, onSwipeOpen: (() -> Unit)? = null) {
     val panels = pluginPanels(ToolWindowAnchor.RIGHT, state.backend, state.active?.path)
     if (panels.isEmpty()) return
     // The drawer opens the currently-selected panel, defaulting to the first.
@@ -96,6 +96,13 @@ internal fun RightToolOverlay(state: IdeUiState) {
                 velocityX > flingPx -> 0f
                 shown.value >= openPx / 2f -> openPx
                 else -> 0f
+            }
+            // When the host re-homes the swipe gesture (DevHub on phones), opening the drawer instead fires the
+            // host callback: close the drawer state (nothing animates) and pass the gesture up the chain.
+            if (target >= openPx / 2f && onSwipeOpen != null) {
+                state.selectedRightPanel = null
+                onSwipeOpen()
+                return
             }
             // `shown` moves opposite to the pointer, so its initial velocity is the negated pointer velocity.
             shown.animateTo(target, tween(Motion.BASE, easing = Motion.quiet), initialVelocity = -velocityX)

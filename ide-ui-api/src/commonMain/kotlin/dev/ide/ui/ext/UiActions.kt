@@ -55,6 +55,8 @@ object UiDestinations {
     const val PROJECTS = "projects"
     const val DEPENDENCIES = "dependencies"
     const val CODE_STYLE = "codeStyle"
+    /** Open the AI assistant (a RIGHT-anchored tool window in the editor). */
+    const val AGENT = "agent"
 }
 
 /**

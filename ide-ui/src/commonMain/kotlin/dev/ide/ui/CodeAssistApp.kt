@@ -28,11 +28,12 @@ import dev.ide.ui.ads.LocalAds
 import dev.ide.ui.backend.AdHost
 import dev.ide.ui.backend.FileActions
 import dev.ide.ui.backend.IdeBackend
-import dev.ide.hub.HubStore
+import dev.ide.hub.HubStoreImpl
 import dev.ide.hub.model.DependencyInfo
 import dev.ide.hub.model.Snippet
 import dev.ide.hub.ui.DependencyDetailScreen
 import dev.ide.hub.ui.DevHubScreen
+import dev.ide.hub.ui.DevHubSeed
 import dev.ide.hub.ui.DevHubState
 import dev.ide.hub.ui.SnippetDetailScreen
 import dev.ide.ui.components.BetaInfo
@@ -117,9 +118,10 @@ fun CodeAssistApp(
     /** A `.caproj` path handed in from outside the app (Android "Open with"). When it changes to a
      *  non-null value, the import preview opens for it. Null on desktop / normal launch. */
     importPackagePath: String? = null,
-    /** The DevHub data store. When present, the Developer Hub (snippets & dependency reference) is
-     *  reachable from the Settings & Tools hub; the shell owns the store's lifecycle. */
-    hubStore: HubStore? = null,
+    /** The DevHub data directory. When present, the Developer Hub (snippets & dependency reference) is
+     *  reachable from the Settings & Tools hub and the editor's swipe gesture; the shell owns the store's
+     *  lifecycle and backfills the bundled seed catalog when the data layer's classpath copy is missing. */
+    hubDataDir: String? = null,
 ) {
     // Register the UI facets of the enabled plugins, then load once. The backend reports exactly the plugins
     // whose engine half is enabled (see BuiltInPlugins' unified engine+UI declaration), so this shell code names
@@ -169,9 +171,15 @@ fun CodeAssistApp(
     // hidden when no project is open (and must never navigate into one). NOT `epoch > 0`: that stays true after
     // a project is closed back to the picker, which is exactly when the row must not show.
     var keystoreInProject by remember { mutableStateOf(false) }
-    // DevHub: the state holder for the snippet/dependency hub (lives as long as a store is provided), plus
-    // the snippet/dependency the user opened on its detail screens.
-    val hubState = remember(hubStore) { hubStore?.let { DevHubState(it) } }
+    // DevHub: the state holder for the snippet/dependency hub (lives as long as a data dir is provided), plus
+    // the snippet/dependency the user opened on its detail screens. The store rides the directory; the
+    // bundled catalog seed (Compose resource) is the fallback when the data layer's classpath copy is missing.
+    val hubState = remember(hubDataDir) {
+        hubDataDir?.let { dir ->
+            HubStoreImpl(java.io.File(dir))
+                .let { store -> DevHubState(store, seedProvider = { DevHubSeed.text() }) }
+        }
+    }
     var hubSnippet by remember { mutableStateOf<Snippet?>(null) }
     var hubDependency by remember { mutableStateOf<DependencyInfo?>(null) }
     var showMigration by remember { mutableStateOf(backend.settings.preference("migration.acknowledged") != "true") }
@@ -615,6 +623,16 @@ fun CodeAssistApp(
                             onCloseProject = { screen = Screen.Projects },
                             onOpenRun = { screen = Screen.Run },
                             fileActions = fileActions,
+                            // The editor's leftward edge swipe opens DevHub (when a store exists); the AI chat
+                            // is reached from the ⋮ menu via UiDestinations.AGENT.
+                            onOpenAgent = {
+                                state.selectedRightPanel = dev.ide.ui.components.pluginPanels(
+                                    dev.ide.ui.ext.ToolWindowAnchor.RIGHT,
+                                    state.backend,
+                                    state.active?.path,
+                                ).firstOrNull()?.id
+                            },
+                            onOpenDevHub = { if (hubState != null) screen = Screen.DevHub },
                         )
 
                         Screen.Run -> RunScreen(

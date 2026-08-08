@@ -94,15 +94,22 @@ class HubStoreImpl(
                 val f = catalogFile()
                 if (f.exists()) json.decodeFromString<HubCatalog>(f.readText()) else null
             }.getOrNull()
-            if (fromDisk != null) {
+            // A persisted catalog with content wins; a stale *empty* one (e.g. a seed-import failure from an
+            // older build) is ignored so a corrected seed can take over again.
+            if (fromDisk != null && (fromDisk.snippets.isNotEmpty() || fromDisk.dependencies.isNotEmpty())) {
                 cached = fromDisk
                 return@synchronized fromDisk
             }
             val seeded = loadSeed()
-            val catalog = seeded ?: HubCatalog()
-            cached = catalog
-            persistCatalog(catalog)
-            catalog
+            if (seeded != null) {
+                cached = seeded
+                persistCatalog(seeded)
+                return@synchronized seeded
+            }
+            // Nothing to show yet (and never persisted, so a later seed/import can still take over).
+            val empty = HubCatalog()
+            cached = empty
+            empty
         }
     }
 
@@ -112,6 +119,21 @@ class HubStoreImpl(
         }
     } catch (e: Exception) {
         null
+    }
+
+    /** Adopt an externally-provided seed (e.g. the UI module's bundled Compose resource) when the classpath
+     *  copy is missing/unreadable on a given platform. No-op when the text is unusable. */
+    fun importSeed(text: String) {
+        val catalog = try {
+            val c = json.decodeFromString<HubCatalog>(text)
+            if (c.snippets.isEmpty() && c.dependencies.isEmpty()) null else c
+        } catch (e: Exception) {
+            null
+        } ?: return
+        synchronized(this) {
+            cached = catalog
+            persistCatalog(catalog)
+        }
     }
 
     private fun persistCatalog(catalog: HubCatalog) {

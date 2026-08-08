@@ -89,6 +89,8 @@ internal fun DestinationSheets(
     onOpenHub: () -> Unit,
     onCloseProject: () -> Unit,
     fileActions: FileActions,
+    onOpenAgent: (() -> Unit)? = null,
+    onOpenDevHub: (() -> Unit)? = null,
 ) {
     BottomSheet(visible = state.moreOpen, onDismiss = { state.moreOpen = false }, heightFraction = 0.62f) {
         // The "More" rows are UI-side actions resolved from the registry; the host bridges them to the app's
@@ -103,6 +105,7 @@ internal fun DestinationSheets(
                         UiDestinations.MODULES -> onOpenModuleConfig(null)
                         UiDestinations.LOGS -> state.logsOpen = true
                         UiDestinations.PROJECTS -> onCloseProject()
+                        UiDestinations.AGENT -> onOpenAgent?.invoke()
                     }
                 }
                 override fun toggleTheme() { state.moreOpen = false; onToggleTheme() }
