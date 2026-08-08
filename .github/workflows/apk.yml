@@ -1,0 +1,54 @@
+name: Build APK
+
+# Builds an installable APK of :ide-android (the "profile" variant: release-like, R8 off, signed with
+# the debug key so it installs directly, Google TEST ad ids). Uploaded as a workflow artifact on every
+# main push and on manual dispatch — this is the fork's who/artifact bottleneck for on-device testing.
+# The framework-only CI (ci.yml) deliberately does NOT build the Android shells; this workflow does.
+
+on:
+  push:
+    branches: [ main, master ]
+    paths-ignore:
+      - "docs/**"
+      - "*.md"
+  workflow_dispatch:
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-apk:
+    name: Assemble Code Studio APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # AGP requires the Android SDK. setup-android installs cmdline-tools, then we add the exact
+      # platform (android-36, incl. the android.jar that ide-android's art-shim compile needs) and a
+      # stable build-tools. ReVanced aapt2 is fetched from GitHub by the build itself.
+      - name: Set up Android SDK (platform 36)
+        uses: android-actions/setup-android@v3
+        with:
+          api-level: 36
+
+      - name: Assemble profile APK
+        run: ./gradlew :ide-android:assembleProfile --stacktrace
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: codestudio-mobile-profile
+          path: ide-android/build/outputs/apk/profile/*.apk
+          if-no-files-found: error
+          retention-days: 30
