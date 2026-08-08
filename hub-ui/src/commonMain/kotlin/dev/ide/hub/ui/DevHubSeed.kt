@@ -1,7 +1,6 @@
 package dev.ide.hub.ui
 
 import dev.ide.hub.ui.generated.resources.Res
-import org.jetbrains.compose.resources.readBytes
 
 /**
  * The bundled DevHub seed catalog, shipped as a Compose resource of :hub-ui. Compose resources are packaged
