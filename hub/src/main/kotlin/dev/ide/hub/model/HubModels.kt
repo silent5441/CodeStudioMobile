@@ -20,7 +20,7 @@ data class Snippet(
     val id: String,
     val title: String,
     val description: String = "",
-    val category: String,
+    val category: String = "",
     val tags: List<String> = emptyList(),
     val dependencies: List<String> = emptyList(),
     val createdAt: Long = 0L,

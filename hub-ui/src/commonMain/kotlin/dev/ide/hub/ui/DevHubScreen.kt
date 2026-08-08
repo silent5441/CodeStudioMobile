@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -67,6 +68,10 @@ enum class HubDest(val label: String, val icon: ImageVector) {
     Favorites("Favs", CaIcons.heart),
     Settings("Settings", CaIcons.gear),
 }
+
+// 6 destinations need room: below this the shell switches to icon-only tabs so the 80%-wide editor
+// overlay (≈320dp on phones) keeps its icons aligned and readable.
+private val NAV_LABEL_MIN_WIDTH = 340.dp
 
 val ALL_LANGUAGE_FILTERS = listOf("Kotlin", "Java", "Compose", "XML")
 
@@ -191,14 +196,17 @@ fun DevHubScreen(
                 }
             }
         }
-        NavigationBar {
-            HubDest.entries.forEach { item ->
-                NavigationBarItem(
-                    selected = dest == item,
-                    onClick = { dest = item },
-                    icon = { Icon(item.icon, contentDescription = item.label) },
-                    label = { Text(item.label) },
-                )
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val showLabels = maxWidth >= NAV_LABEL_MIN_WIDTH
+            NavigationBar {
+                HubDest.entries.forEach { item ->
+                    NavigationBarItem(
+                        selected = dest == item,
+                        onClick = { dest = item },
+                        icon = { Icon(item.icon, contentDescription = item.label) },
+                        label = if (showLabels) ({ Text(item.label) }) else null,
+                    )
+                }
             }
         }
     }

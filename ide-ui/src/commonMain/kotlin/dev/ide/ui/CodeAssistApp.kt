@@ -515,7 +515,12 @@ fun CodeAssistApp(
                         .forAnchor(dev.ide.ui.ext.ToolWindowAnchor.RIGHT)
                         .firstOrNull { it.id.startsWith("agent") }?.id
                 },
-                onOpenDevHub = { if (hubState != null) screen = Screen.DevHub },
+                // Editor-origin DevHub always returns to the editor, so the 80% overlay (not the full screen
+                // from the picker/Settings hub) is what the user gets when they open it from the editor.
+                onOpenDevHub = {
+                    hubReturn = Screen.Editor
+                    if (hubState != null) screen = Screen.DevHub
+                },
             )
         }
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -871,7 +876,11 @@ fun CodeAssistApp(
                             shape = RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp),
                             tonalElevation = 3.dp,
                         ) {
-                            devHubPane(hub)
+                            // In the editor the status bar is often immersive, so the panel must reserve
+                            // its own top inset — otherwise the DevHub header sits under the clock/battery.
+                            Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.statusBars)) {
+                                devHubPane(hub)
+                            }
                         }
                     }
                 }
