@@ -67,6 +67,10 @@ interface HubStore {
     /** Adopt an externally-provided catalog (seed fallback), persisting it for offline use. */
     fun importSeed(text: String)
 
+    /** Adds (or replaces, by id) a snippet authored on-device, plus any new dependencies, merging it into
+     *  the local catalog and persisting. The change is visible to every DevHub screen immediately. */
+    fun addSnippet(snippet: Snippet, extraDependencies: List<DependencyInfo> = emptyList())
+
     /** Human-readable outcome of the last [importSeed] attempt (decode result / exception). */
     val lastImportDetail: String?
         get() = null

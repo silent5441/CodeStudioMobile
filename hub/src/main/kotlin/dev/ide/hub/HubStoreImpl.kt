@@ -145,6 +145,22 @@ class HubStoreImpl(
         }
     }
 
+    override fun addSnippet(snippet: Snippet, extraDependencies: List<DependencyInfo>) {
+        synchronized(this) {
+            val current = cached ?: HubCatalog()
+            val merged = HubCatalog(
+                schema = current.schema,
+                meta = current.meta,
+                snippets = current.snippets.filterNot { it.id == snippet.id } + snippet,
+                dependencies = current.dependencies + extraDependencies.filterNot { dep ->
+                    current.dependencies.any { it.groupId == dep.groupId && it.artifactId == dep.artifactId }
+                },
+            )
+            cached = merged
+            persistCatalog(merged)
+        }
+    }
+
     private fun persistCatalog(catalog: HubCatalog) {
         dir.mkdirs()
         catalogFile().writeText(json.encodeToString(HubCatalog.serializer(), catalog))

@@ -1,6 +1,7 @@
 package dev.ide.hub.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -92,6 +93,7 @@ fun depCatalog(g: String, a: String, v: String) = "$a = { module = \"$g:$a\", ve
  * DevHub: the on-device code + dependency reference hub. A self-contained shell with its own bottom
  * navigation; hosts: Home, Explore, Search, Categories, Favorites, Settings + detail screens.
  */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun DevHubScreen(
     state: DevHubState,
@@ -103,6 +105,8 @@ fun DevHubScreen(
 ) {
     var dest by remember { mutableStateOf(HubDest.Home) }
     var categoryFilter by remember { mutableStateOf<String?>(null) }
+    // Hidden local-authoring dashboard: long-press the hub title to open the Add Snippet form.
+    var showAddSnippet by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) { state.load() }
@@ -127,6 +131,10 @@ fun DevHubScreen(
                 "Developer Hub",
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.combinedClickable(
+                    onClick = {},
+                    onLongClick = { showAddSnippet = true },
+                ).padding(horizontal = 8.dp, vertical = 4.dp),
             )
             Spacer(Modifier.weight(1f))
             // The active destination, so the header reads as part of the shell (not a second app).
@@ -141,6 +149,11 @@ fun DevHubScreen(
         Box(Modifier.weight(1f)) {
             val catalog = state.catalog
             when {
+                showAddSnippet -> AddSnippetContent(
+                    state = state,
+                    onCancel = { showAddSnippet = false },
+                    onSaved = { showAddSnippet = false; dest = HubDest.Home },
+                )
                 state.loading && catalog == null -> Box(Modifier.fillMaxSize()) {
                     CircularProgressIndicator(Modifier.align(Alignment.Center))
                 }

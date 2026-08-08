@@ -6,7 +6,10 @@ import androidx.compose.runtime.setValue
 import dev.ide.hub.Filters
 import dev.ide.hub.HubStore
 import dev.ide.hub.SearchHit
+import dev.ide.hub.model.DependencyInfo
 import dev.ide.hub.model.HubCatalog
+import dev.ide.hub.model.Snippet
+import dev.ide.hub.model.SnippetImplementation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -107,4 +110,64 @@ class DevHubState(
     fun lastSyncedAt(): Long? = store.lastSyncedAt()
 
     suspend fun search(query: String, filters: Filters): List<SearchHit> = store.search(query, filters)
+
+    /** Merge a snippet authored on-device into the catalog (new dependency optional) and refresh the UI.
+     *  Returns the assigned snippet id, or null when the merge failed. */
+    suspend fun addLocalSnippet(
+        title: String,
+        description: String,
+        category: String,
+        tags: List<String>,
+        language: String,
+        technology: String,
+        code: String,
+        dependency: String,
+    ): Boolean {
+        val depIds = mutableListOf<String>()
+        val extraDeps = mutableListOf<DependencyInfo>()
+        val dep = dependency.trim()
+        if (dep.isNotBlank()) {
+            val parts = dep.split(":", limit = 3)
+            if (parts.size >= 2) {
+                val (g, a) = parts
+                val v = parts.getOrElse(2) { "latest" }
+                depIds += "$g:$a"
+                extraDeps += DependencyInfo(
+                    groupId = g.trim(),
+                    artifactId = a.trim(),
+                    latestVersion = v.trim(),
+                    versions = listOf(v.trim()),
+                )
+            }
+        }
+        val slug = title.trim().lowercase()
+            .replace(Regex("[^a-z0-9]+"), "-")
+            .trim('-')
+            .ifBlank { "snippet" }
+        val id = "$slug-${System.currentTimeMillis() % 1000}"
+        val snippet = Snippet(
+            id = id,
+            title = title.trim(),
+            description = description.trim(),
+            category = category.trim().ifBlank { "General" },
+            tags = tags.map { it.trim() }.filter { it.isNotEmpty() },
+            dependencies = depIds,
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis(),
+            implementations = listOf(
+                SnippetImplementation(
+                    language = language,
+                    technology = technology.ifBlank { language.replaceFirstChar { it.uppercase() } },
+                    code = code.trim(),
+                ),
+            ),
+        )
+        return runCatching {
+            withContext(Dispatchers.IO) {
+                store.addSnippet(snippet, extraDeps)
+                catalog = store.catalog()
+            }
+            true
+        }.getOrDefault(false)
+    }
 }
