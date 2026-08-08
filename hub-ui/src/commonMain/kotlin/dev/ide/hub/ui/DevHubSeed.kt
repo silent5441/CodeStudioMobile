@@ -1,14 +1,12 @@
 package dev.ide.hub.ui
 
-import dev.ide.hub.ui.generated.resources.Res
-
 /**
- * The bundled DevHub seed catalog, shipped as a Compose resource of :hub-ui. Compose resources are packaged
- * reliably on both the Android and desktop targets (which the :hub JVM module's classpath resource is not
- * always), so this is the fallback the store imports when its classpath copy is missing. Read lazily.
+ * The bundled DevHub seed catalog, compiled into this module as [EMBEDDED_CATALOG_JSON]. A compile-time
+ * constant is the only copy guaranteed to survive every Android/compose packaging path (classpath resources
+ * and compose-resource assets have both been seen missing on device), so it is the store's import fallback.
  */
 object DevHubSeed {
-    suspend fun text(): String? = runCatching {
-        Res.readBytes("files/hub-seed-catalog.json").decodeToString()
-    }.getOrNull() ?: EMBEDDED_CATALOG_JSON
+    /** The guaranteed catalog copy. The compose-resource asset is skipped entirely: it has been known to be
+     *  dropped/broken on some Android packaging, and the compiled-in constant cannot be. */
+    suspend fun text(): String? = EMBEDDED_CATALOG_JSON
 }

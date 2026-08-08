@@ -1,12 +1,16 @@
 package dev.ide.ui
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -20,8 +24,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
 import dev.ide.ui.ads.AdController
 import dev.ide.ui.ads.BuildAdInterstitial
 import dev.ide.ui.ads.LocalAds
@@ -467,6 +474,49 @@ fun CodeAssistApp(
         // Occasional full-screen ad over a LONG build (Android only; inert on desktop / when ads are off).
         // Renders nothing — it just observes the build state and asks the host to present an interstitial.
         BuildAdInterstitial(backend, adController)
+        // DevHub screens: one pane for the hub itself (hosted full-screen from the picker hub, or as a
+        // right-edge 80% overlay over the editor), plus the snippet/dependency detail panes.
+        val devHubPane: @Composable (dev.ide.hub.ui.DevHubState) -> Unit = { hub ->
+            DevHubScreen(
+                state = hub,
+                onClose = { screen = hubReturn },
+                onOpenSnippet = { s -> hubSnippet = s; screen = Screen.DevHubSnippet },
+                onOpenDependency = { d -> hubDependency = d; screen = Screen.DevHubDependency },
+                onShareText = null,
+            )
+        }
+        // The editor composition (shared by Screen.Editor and the editor-origin DevHub overlay, which keeps
+        // the editor underneath the 80% panel).
+        val editorContent: @Composable () -> Unit = {
+            EditorScreen(
+                state = state,
+                onToggleTheme = {
+                    // Quick toggle flips to the opposite of what's shown (an explicit light/dark, stepping
+                    // out of "system" if that was active).
+                    backend.settings.setSetting("appearance", "themeMode", if (dark) "light" else "dark")
+                    settings = backend.settings.settings()
+                },
+                onOpenHub = { hubReturn = Screen.Editor; screen = Screen.Hub },
+                onOpenDependencies = { module ->
+                    configModule = module; modulesTab = ModulesTab.Dependencies; screen = Screen.ModuleConfig
+                },
+                onOpenModuleConfig = { module ->
+                    configModule = module; modulesTab = ModulesTab.Settings; screen = Screen.ModuleConfig
+                },
+                onCloseProject = { screen = Screen.Projects },
+                onOpenRun = { screen = Screen.Run },
+                fileActions = fileActions,
+                // The editor's leftward edge swipe opens DevHub (when a store exists); the AI chat is reached
+                // from the ⋮ menu via UiDestinations.AGENT — resolved through the plugin tool-window registry
+                // (non-composable, unlike pluginPanels).
+                onOpenAgent = {
+                    state.selectedRightPanel = dev.ide.ui.ext.ToolWindowRegistry
+                        .forAnchor(dev.ide.ui.ext.ToolWindowAnchor.RIGHT)
+                        .firstOrNull { it.id.startsWith("agent") }?.id
+                },
+                onOpenDevHub = { if (hubState != null) screen = Screen.DevHub },
+            )
+        }
         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
                 ScreenHost(screen, Modifier.fillMaxSize()) { s ->
@@ -623,36 +673,7 @@ fun CodeAssistApp(
                             onCreateFromTemplate = { id -> createTemplateId = id; screen = Screen.CreateProject },
                         )
 
-                        Screen.Editor -> EditorScreen(
-                            state = state,
-                            onToggleTheme = {
-                                // Quick toggle flips to the opposite of what's shown (an explicit light/dark,
-                                // stepping out of "system" if that was active).
-                                backend.settings.setSetting("appearance", "themeMode", if (dark) "light" else "dark")
-                                settings = backend.settings.settings()
-                            },
-                            onOpenHub = { hubReturn = Screen.Editor; screen = Screen.Hub },
-                            onOpenDependencies = { module ->
-                                configModule = module; modulesTab =
-                                ModulesTab.Dependencies; screen = Screen.ModuleConfig
-                            },
-                            onOpenModuleConfig = { module ->
-                                configModule = module; modulesTab = ModulesTab.Settings; screen =
-                                Screen.ModuleConfig
-                            },
-                            onCloseProject = { screen = Screen.Projects },
-                            onOpenRun = { screen = Screen.Run },
-                            fileActions = fileActions,
-                            // The editor's leftward edge swipe opens DevHub (when a store exists); the AI chat
-                            // is reached from the ⋮ menu via UiDestinations.AGENT — resolved through the plugin
-                            // tool-window registry (non-composable, unlike pluginPanels).
-                            onOpenAgent = {
-                                state.selectedRightPanel = dev.ide.ui.ext.ToolWindowRegistry
-                                    .forAnchor(dev.ide.ui.ext.ToolWindowAnchor.RIGHT)
-                                    .firstOrNull { it.id.startsWith("agent") }?.id
-                            },
-                            onOpenDevHub = { if (hubState != null) screen = Screen.DevHub },
-                        )
+                        Screen.Editor -> editorContent()
 
                         Screen.Run -> RunScreen(
                             backend = state.backend,
@@ -752,15 +773,13 @@ fun CodeAssistApp(
                             } else null,
                         )
 
-                        // DevHub — the on-device snippet & dependency reference (wired only when a store exists).
-                        Screen.DevHub -> hubState?.let { state ->
-                            DevHubScreen(
-                                state = state,
-                                onClose = { screen = hubReturn },
-                                onOpenSnippet = { s -> hubSnippet = s; screen = Screen.DevHubSnippet },
-                                onOpenDependency = { d -> hubDependency = d; screen = Screen.DevHubDependency },
-                                onShareText = null,
-                            )
+                        // DevHub — the on-device snippet & dependency reference (wired only when a store exists). From the
+                        // editor it renders as a right-edge 80% overlay (the editor stays composed underneath);
+                        // from the picker/Settings hub it is a full screen.
+                        Screen.DevHub -> {
+                            if (hubReturn == Screen.Editor) {
+                                editorContent()
+                            } else hubState?.let { devHubPane(it) }
                         }
                         Screen.DevHubSnippet -> hubSnippet?.let { s ->
                             hubState?.let { state ->
@@ -828,6 +847,34 @@ fun CodeAssistApp(
                 onConvert = { showImportModeChoice = false; runGradleImport(true) },
                 onDismiss = { showImportModeChoice = false },
             )
+            // DevHub overlay (editor origin): a scrim + a right-edge 80%-wide panel above the editor, styled
+            // like the app's sheets. Tapping the scrim closes it back to the editor (the DevHub back button
+            // does the same).
+            if (screen == Screen.DevHub && hubReturn == Screen.Editor) {
+                Box(Modifier.fillMaxSize()) {
+                    Box(
+                        Modifier.fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.45f))
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                            ) { screen = hubReturn },
+                    )
+                    hubState?.let { hub ->
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .fillMaxSize()
+                                .align(Alignment.CenterEnd),
+                            color = MaterialTheme.colorScheme.surface,
+                            shape = RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp),
+                            tonalElevation = 3.dp,
+                        ) {
+                            devHubPane(hub)
+                        }
+                    }
+                }
+            }
         }
         }
     }

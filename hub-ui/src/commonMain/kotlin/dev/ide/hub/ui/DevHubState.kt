@@ -40,21 +40,32 @@ class DevHubState(
     var lastSyncMessage by mutableStateOf<String?>(null)
         private set
 
+    /** Human-readable detail of the latest load attempt (which fallback ran / why it stayed empty). */
+    var loadDetail by mutableStateOf<String?>(null)
+        private set
+
     suspend fun load() {
         loading = true
         error = null
         try {
             var c = withContext(Dispatchers.IO) { store.catalog() }
-            if (c.snippets.isEmpty() && c.dependencies.isEmpty() && seedProvider != null) {
-                val seed = seedProvider()
+            if (c.snippets.isEmpty() && c.dependencies.isEmpty()) {
+                val seed = seedProvider?.invoke()
                 if (seed != null) {
                     withContext(Dispatchers.IO) { store.importSeed(seed) }
                     c = withContext(Dispatchers.IO) { store.catalog() }
+                }
+                loadDetail = when {
+                    c.snippets.isNotEmpty() || c.dependencies.isNotEmpty() ->
+                        "(re-seeded from the bundled catalog: ${c.snippets.size} snippets, ${c.dependencies.size} deps)"
+                    seed != null -> "still empty after importing the bundled catalog seed"
+                    else -> "no bundled seed available to import"
                 }
             }
             catalog = c
         } catch (e: Exception) {
             error = e.message ?: "Failed to load catalog"
+            loadDetail = "load() threw: ${e::class.simpleName}"
         } finally {
             loading = false
         }

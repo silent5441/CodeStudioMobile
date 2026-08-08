@@ -67,9 +67,14 @@ private val FlingCommit = 320.dp
 @Composable
 internal fun RightToolOverlay(state: IdeUiState, onSwipeOpen: (() -> Unit)? = null) {
     val panels = pluginPanels(ToolWindowAnchor.RIGHT, state.backend, state.active?.path)
-    if (panels.isEmpty()) return
+    if (panels.isEmpty() && onSwipeOpen == null) return
+    // When the host re-homes the swipe (DevHub on phones), the drawer is a pure gesture: it must NOT let the
+    // real panel (the AI chat) peek out mid-drag — the panel only ever opens through the explicit actions
+    // (the ⋮ menu / rail). `drawer` gates every piece of drawer UI; the gesture strip keeps working.
+    val drawerHomesSwipe = onSwipeOpen != null
+    val drawerEnabled = panels.isNotEmpty()
     // The drawer opens the currently-selected panel, defaulting to the first.
-    val primaryId = panels.first().id
+    val primaryId = panels.firstOrNull()?.id
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val density = LocalDensity.current
@@ -83,36 +88,55 @@ internal fun RightToolOverlay(state: IdeUiState, onSwipeOpen: (() -> Unit)? = nu
         val shown = remember { Animatable(0f) }
         shown.updateBounds(0f, openPx)
         // Composited while open OR mid-animation; a fully closed drawer composes nothing over the editor.
-        val visible by remember { derivedStateOf { shown.value > 0.5f || state.selectedRightPanel != null } }
+        // In DevHub-gesture mode (drawerHomesSwipe) nothing is drawn while dragging — `shown` isn't driven
+        // during the gesture either, so the panel can never peek half-way. Explicit opens (rail / ⋮ menu)
+        // still animate normally: they set `selectedRightPanel`, which the LaunchedEffect below honors.
+        val visible by remember {
+            derivedStateOf {
+                !drawerHomesSwipe && (shown.value > 0.5f || state.selectedRightPanel != null) ||
+                    state.selectedRightPanel != null && drawerEnabled
+            }
+        }
 
         // A leftward drag (negative delta) opens; a rightward drag closes.
         fun dragBy(delta: Float) {
+            // In DevHub-gesture mode, a bare swipe (no explicit panel selection) is a pure signal:
+            // don't move `shown` — that is exactly what made the half-open ghost panel appear.
+            // An explicitly opened panel (⋮ menu / rail) can still be dragged to close it.
+            if (drawerHomesSwipe && state.selectedRightPanel == null) return
             scope.launch { shown.snapTo((shown.value - delta).coerceIn(0f, openPx)) }
         }
 
-        suspend fun settle(velocityX: Float) {
+        suspend fun settle(velocityX: Float, dragged: Float = shown.value) {
             val target = when {
                 velocityX < -flingPx -> openPx
                 velocityX > flingPx -> 0f
-                shown.value >= openPx / 2f -> openPx
+                dragged >= openPx / 2f -> openPx
                 else -> 0f
             }
-            // When the host re-homes the swipe gesture (DevHub on phones), opening the drawer instead fires the
-            // host callback: close the drawer state (nothing animates) and pass the gesture up the chain.
+            // When the host re-homes the swipe gesture (DevHub on phones), a threshold release fires the
+            // host callback with NO drawer animation / panel rendering — the gesture is a pure signal.
             if (target >= openPx / 2f && onSwipeOpen != null) {
+                shown.snapTo(0f)
                 state.selectedRightPanel = null
                 onSwipeOpen()
                 return
             }
             // `shown` moves opposite to the pointer, so its initial velocity is the negated pointer velocity.
             shown.animateTo(target, tween(Motion.BASE, easing = Motion.quiet), initialVelocity = -velocityX)
-            state.selectedRightPanel = if (target >= openPx / 2f) (state.selectedRightPanel ?: primaryId) else null
+            if (drawerEnabled) {
+                state.selectedRightPanel = if (target >= openPx / 2f) (state.selectedRightPanel ?: primaryId) else null
+            }
         }
 
         // External toggles (top-bar button, back press, initial state) animate to the same offset.
+        // This runs on every recomposition, but only animates when the target actually differs,
+        // so in gesture mode with no explicit selection it is a no-op.
         LaunchedEffect(state.selectedRightPanel, openPx) {
-            val target = if (state.selectedRightPanel != null) openPx else 0f
-            if (shown.value != target) shown.animateTo(target, tween(Motion.BASE, easing = Motion.quiet))
+            if (drawerEnabled) {
+                val target = if (state.selectedRightPanel != null) openPx else 0f
+                if (shown.value != target) shown.animateTo(target, tween(Motion.BASE, easing = Motion.quiet))
+            }
         }
 
         // Persistent thin right-edge catcher: the only thing laid over the editor while closed. A leftward,
@@ -127,6 +151,9 @@ internal fun RightToolOverlay(state: IdeUiState, onSwipeOpen: (() -> Unit)? = nu
                             if (shown.value > 0.5f) return@awaitEachGesture
                             var totalX = 0f
                             var totalY = 0f
+                            // The raw leftward travel of THIS gesture, passed to settle() so the DevHub
+                            // threshold works even though `shown` is not driven in gesture mode.
+                            var gestureX = 0f
                             var claimed = false
                             val tracker = VelocityTracker()
                             while (true) {
@@ -135,7 +162,7 @@ internal fun RightToolOverlay(state: IdeUiState, onSwipeOpen: (() -> Unit)? = nu
                                 if (!change.pressed) {
                                     if (claimed) {
                                         change.consume()
-                                        scope.launch { settle(tracker.calculateVelocity().x) }
+                                        scope.launch { settle(tracker.calculateVelocity().x, gestureX) }
                                     }
                                     break
                                 }
@@ -148,6 +175,7 @@ internal fun RightToolOverlay(state: IdeUiState, onSwipeOpen: (() -> Unit)? = nu
                                 }
                                 if (claimed) {
                                     tracker.addPosition(change.uptimeMillis, change.position)
+                                    gestureX = -totalX
                                     dragBy(delta.x)
                                     change.consume()
                                 }

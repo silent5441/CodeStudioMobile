@@ -148,7 +148,14 @@ fun DevHubScreen(
                 catalog == null -> HubEmptyState(
                     icon = CaIcons.box,
                     title = "Nothing here yet",
-                    message = "The catalog is empty. Check your sync URL in Settings.",
+                    message = state.loadDetail
+                        ?: "The catalog is empty. Check your sync URL in Settings.",
+                    modifier = Modifier.align(Alignment.Center),
+                )
+                catalog.snippets.isEmpty() && catalog.dependencies.isEmpty() -> HubEmptyState(
+                    icon = CaIcons.box,
+                    title = "Empty catalog",
+                    message = state.loadDetail ?: "The bundled catalog didn't make it into this build.",
                     modifier = Modifier.align(Alignment.Center),
                 )
                 else -> when (dest) {
