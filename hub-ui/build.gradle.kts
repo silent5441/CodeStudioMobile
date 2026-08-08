@@ -11,6 +11,12 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// The bundled DevHub seed catalog ships as a Compose resource (see composeResources/). The generated
+// `Res` accessor must land in a stable package, exactly like :ide-ui configures for its own resources.
+compose.resources {
+    packageOfResClass = "dev.ide.hub.ui.generated.resources"
+}
+
 kotlin {
     jvm("desktop") {
         compilerOptions {
