@@ -66,4 +66,8 @@ interface HubStore {
 
     /** Adopt an externally-provided catalog (seed fallback), persisting it for offline use. */
     fun importSeed(text: String)
+
+    /** Human-readable outcome of the last [importSeed] attempt (decode result / exception). */
+    val lastImportDetail: String?
+        get() = null
 }

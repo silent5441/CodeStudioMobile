@@ -58,7 +58,8 @@ class DevHubState(
                 loadDetail = when {
                     c.snippets.isNotEmpty() || c.dependencies.isNotEmpty() ->
                         "(re-seeded from the bundled catalog: ${c.snippets.size} snippets, ${c.dependencies.size} deps)"
-                    seed != null -> "still empty after importing the bundled catalog seed"
+                    seed != null ->
+                        "still empty after importing the bundled catalog seed [${store.lastImportDetail ?: "import never ran"}]"
                     else -> "no bundled seed available to import"
                 }
             }

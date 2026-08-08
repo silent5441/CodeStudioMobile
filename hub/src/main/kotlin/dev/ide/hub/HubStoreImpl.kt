@@ -123,16 +123,25 @@ class HubStoreImpl(
 
     /** Adopt an externally-provided seed (e.g. the UI module's bundled Compose resource) when the classpath
      *  copy is missing/unreadable on a given platform. No-op when the text is unusable. */
+    override var lastImportDetail: String? = null
+
     override fun importSeed(text: String) {
-        val catalog = try {
+        val (catalog, detail) = try {
             val c = json.decodeFromString<HubCatalog>(text)
-            if (c.snippets.isEmpty() && c.dependencies.isEmpty()) null else c
+            if (c.snippets.isEmpty() && c.dependencies.isEmpty()) {
+                null to "decoded to an empty catalog (schema mismatch?): ${text.length} chars in"
+            } else {
+                c to "decoded ok: ${c.snippets.size} snippets, ${c.dependencies.size} deps (${text.length} chars)"
+            }
         } catch (e: Exception) {
-            null
-        } ?: return
+            null to "decode threw ${e::class.simpleName}: ${e.message}"
+        }
+        lastImportDetail = detail
+        if (catalog == null) return
         synchronized(this) {
             cached = catalog
-            persistCatalog(catalog)
+            runCatching { persistCatalog(catalog) }
+                .getOrElse { lastImportDetail = detail + "; persist failed: ${it.message}" }
         }
     }
 
