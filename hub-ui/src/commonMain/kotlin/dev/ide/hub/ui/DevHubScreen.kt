@@ -340,12 +340,18 @@ private fun SearchContent(
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
-            placeholder = { Text("Search everything…") },
+            placeholder = { Text("Search functions, buttons, layouts, dependency ids…") },
             leadingIcon = { Icon(CaIcons.search, null) },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
+        )
+        Text(
+            "Matches titles, code (function/widget/layout names), tags and dependencies — e.g. \"FilledButton\", \"fadeIn\", \"Retrofit\".",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 0.dp),
         )
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -415,6 +421,8 @@ private fun SearchContent(
                             description = hit.snippet.description,
                             languages = hit.snippet.implementations.map { it.language }.distinct(),
                             isFavorite = state.isFavorite(hit.snippet.id),
+                            // The verification aid: why this snippet matched (title/code/tags/dependency).
+                            matchHint = "matched in ${hit.matchedIn}",
                             onClick = { onOpenSnippet(hit.snippet) },
                             onFavorite = { state.toggleFavorite(hit.snippet.id) },
                             modifier = Modifier.padding(vertical = 4.dp),

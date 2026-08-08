@@ -10,5 +10,5 @@ import dev.ide.hub.ui.generated.resources.Res
 object DevHubSeed {
     suspend fun text(): String? = runCatching {
         Res.readBytes("files/hub-seed-catalog.json").decodeToString()
-    }.getOrNull()
+    }.getOrNull() ?: EMBEDDED_CATALOG_JSON
 }

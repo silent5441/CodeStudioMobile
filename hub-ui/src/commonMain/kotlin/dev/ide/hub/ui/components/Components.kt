@@ -122,6 +122,7 @@ fun SnippetRow(
     languages: List<String>,
     isFavorite: Boolean,
     modifier: Modifier = Modifier,
+    matchHint: String? = null,
     onClick: () -> Unit,
     onFavorite: () -> Unit,
 ) {
@@ -159,6 +160,14 @@ fun SnippetRow(
             )
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 languages.take(2).forEach { HubChip(it) }
+            }
+            if (matchHint != null) {
+                Text(
+                    "✓ $matchHint",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
             }
         }
     }

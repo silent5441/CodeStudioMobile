@@ -31,6 +31,7 @@ import dev.ide.ui.backend.IdeBackend
 import dev.ide.hub.HubStoreImpl
 import dev.ide.hub.model.DependencyInfo
 import dev.ide.hub.model.Snippet
+import dev.ide.hub.model.SnippetImplementation
 import dev.ide.hub.ui.DependencyDetailScreen
 import dev.ide.hub.ui.DevHubScreen
 import dev.ide.hub.ui.DevHubSeed
@@ -182,6 +183,25 @@ fun CodeAssistApp(
     }
     var hubSnippet by remember { mutableStateOf<Snippet?>(null) }
     var hubDependency by remember { mutableStateOf<DependencyInfo?>(null) }
+    // DevHub "Add to project": writes the snippet's code into the directory of the currently open file (the
+    // predictable spot — the user is usually editing right where they want the snippet) and opens it. Only
+    // offered while a project file is open; the button is hidden otherwise.
+    val hubAddToProject: ((Snippet, SnippetImplementation) -> Unit)? =
+        if (state.active?.path != null) {
+            { snippet, impl ->
+                val dir = state.active?.path?.substringBeforeLast('/')?.takeIf { it.isNotBlank() }
+                if (dir != null) {
+                    val ext = when {
+                        impl.language.contains("xml", ignoreCase = true) -> "xml"
+                        impl.language.contains("java", ignoreCase = true) -> "java"
+                        else -> "kt"
+                    }
+                    val name = "Snippet_${snippet.id.replace(Regex("[^A-Za-z0-9_]", option = RegexOption.IGNORE_CASE), "_")}.$ext"
+                    val created = backend.files.createFile(dir, name, impl.code)
+                    if (created != null) state.openAt(created, 0)
+                }
+            }
+        } else null
     var showMigration by remember { mutableStateOf(backend.settings.preference("migration.acknowledged") != "true") }
     var showLegacyRecovery by remember { mutableStateOf(backend.settings.preference("legacy.recovery.seen") != "true") }
     var showOnboarding by remember { mutableStateOf(backend.settings.preference("onboarding.seen") != "true") }
@@ -750,6 +770,7 @@ fun CodeAssistApp(
                                     onBack = { screen = Screen.DevHub },
                                     onOpenDependency = { d -> hubDependency = d; screen = Screen.DevHubDependency },
                                     onShareText = null,
+                                    onAddToProject = hubAddToProject,
                                 )
                             }
                         }

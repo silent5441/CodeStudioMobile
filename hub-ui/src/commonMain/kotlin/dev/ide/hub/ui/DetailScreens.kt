@@ -22,6 +22,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import dev.ide.hub.model.DependencyInfo
 import dev.ide.hub.model.Snippet
+import dev.ide.hub.model.SnippetImplementation
 import dev.ide.hub.ui.components.CodeBlock
 import dev.ide.hub.ui.components.DependencyRow
 import dev.ide.hub.ui.components.HubChip
@@ -56,10 +58,12 @@ fun SnippetDetailScreen(
     onBack: () -> Unit,
     onOpenDependency: (DependencyInfo) -> Unit,
     onShareText: ((String) -> Unit)? = null,
+    onAddToProject: ((Snippet, SnippetImplementation) -> Unit)? = null,
 ) {
     val clipboard = LocalClipboardManager.current
     var selectedImpl by remember { mutableStateOf(0) }
     var copied by remember { mutableStateOf(false) }
+    var added by remember { mutableStateOf(false) }
 
     val impls = snippet.implementations
     val current = impls.getOrNull(selectedImpl) ?: impls.firstOrNull()
@@ -166,6 +170,34 @@ fun SnippetDetailScreen(
                             ),
                             modifier = Modifier.padding(top = 4.dp),
                         )
+                    }
+                }
+                if (onAddToProject != null) {
+                    item {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextButton(
+                                enabled = !added,
+                                onClick = {
+                                    onAddToProject(snippet, impl)
+                                    added = true
+                                },
+                            ) {
+                                Text(if (added) "Added to project" else "Add to project")
+                            }
+                            if (added) {
+                                Text(
+                                    "Open it in the editor to use it",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            } else {
+                                Text(
+                                    "Creates a file with this code in the current project",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
                     }
                 }
             }
