@@ -41,6 +41,7 @@ import dev.ide.hub.ui.components.CodeBlock
 import dev.ide.hub.ui.components.DependencyRow
 import dev.ide.hub.ui.components.HubChip
 import dev.ide.hub.ui.components.SectionTitle
+import dev.ide.hub.ui.highlight.highlightLines
 import dev.ide.ui.icons.CaIcons
 
 /**
@@ -263,24 +264,24 @@ fun DependencyDetailScreen(
             }
 
             item { SectionTitle("Declarations") }
-            DeclarationRow(
+            item { DeclarationRow(
                 label = "Gradle Kotlin DSL",
                 code = depKts(dep.groupId, dep.artifactId, dep.latestVersion),
                 copied = copied,
                 onCopy = { copy("Gradle Kotlin DSL", depKts(dep.groupId, dep.artifactId, dep.latestVersion)) },
-            )
-            DeclarationRow(
+            ) }
+            item { DeclarationRow(
                 label = "Gradle Groovy",
                 code = depGroovy(dep.groupId, dep.artifactId, dep.latestVersion),
                 copied = copied,
                 onCopy = { copy("Gradle Groovy", depGroovy(dep.groupId, dep.artifactId, dep.latestVersion)) },
-            )
-            DeclarationRow(
+            ) }
+            item { DeclarationRow(
                 label = "Version catalog",
                 code = depCatalog(dep.groupId, dep.artifactId, dep.latestVersion),
                 copied = copied,
                 onCopy = { copy("Version catalog", depCatalog(dep.groupId, dep.artifactId, dep.latestVersion)) },
-            )
+            ) }
 
             if (dep.versions.isNotEmpty()) {
                 item { SectionTitle("Versions") }

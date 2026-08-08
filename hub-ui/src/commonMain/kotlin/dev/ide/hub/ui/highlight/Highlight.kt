@@ -11,7 +11,7 @@ import androidx.compose.ui.text.SpanStyle
  */
 enum class HighlightLang { Kotlin, Java, Compose, Xml, Groovy, Text }
 
-enum class TokenKind { Comment, Str, Keyword, Annotation, Number, Tag, Attr, Plain }
+enum class TokenKind { Comment, String, Keyword, Annotation, Number, Tag, Attr, Plain }
 
 internal data class Tok(
     val text: String,
