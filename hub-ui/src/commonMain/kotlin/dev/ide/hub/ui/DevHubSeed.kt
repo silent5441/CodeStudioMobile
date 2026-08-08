@@ -1,6 +1,6 @@
 package dev.ide.hub.ui
 
-import org.jetbrains.compose.resources.Res
+import dev.ide.hub.ui.generated.resources.Res
 import org.jetbrains.compose.resources.readBytes
 
 /**
