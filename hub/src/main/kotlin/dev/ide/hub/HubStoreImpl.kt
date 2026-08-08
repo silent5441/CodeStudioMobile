@@ -123,7 +123,7 @@ class HubStoreImpl(
 
     /** Adopt an externally-provided seed (e.g. the UI module's bundled Compose resource) when the classpath
      *  copy is missing/unreadable on a given platform. No-op when the text is unusable. */
-    fun importSeed(text: String) {
+    override fun importSeed(text: String) {
         val catalog = try {
             val c = json.decodeFromString<HubCatalog>(text)
             if (c.snippets.isEmpty() && c.dependencies.isEmpty()) null else c
