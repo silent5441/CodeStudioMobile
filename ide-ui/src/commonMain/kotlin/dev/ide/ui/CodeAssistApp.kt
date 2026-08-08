@@ -183,25 +183,6 @@ fun CodeAssistApp(
     }
     var hubSnippet by remember { mutableStateOf<Snippet?>(null) }
     var hubDependency by remember { mutableStateOf<DependencyInfo?>(null) }
-    // DevHub "Add to project": writes the snippet's code into the directory of the currently open file (the
-    // predictable spot — the user is usually editing right where they want the snippet) and opens it. Only
-    // offered while a project file is open; the button is hidden otherwise.
-    val hubAddToProject: ((Snippet, SnippetImplementation) -> Unit)? =
-        if (state.active?.path != null) {
-            { snippet, impl ->
-                val dir = state.active?.path?.substringBeforeLast('/')?.takeIf { it.isNotBlank() }
-                if (dir != null) {
-                    val ext = when {
-                        impl.language.contains("xml", ignoreCase = true) -> "xml"
-                        impl.language.contains("java", ignoreCase = true) -> "java"
-                        else -> "kt"
-                    }
-                    val name = "Snippet_${snippet.id.replace(Regex("[^A-Za-z0-9_]", option = RegexOption.IGNORE_CASE), "_")}.$ext"
-                    val created = backend.files.createFile(dir, name, impl.code)
-                    if (created != null) state.openAt(created, 0)
-                }
-            }
-        } else null
     var showMigration by remember { mutableStateOf(backend.settings.preference("migration.acknowledged") != "true") }
     var showLegacyRecovery by remember { mutableStateOf(backend.settings.preference("legacy.recovery.seen") != "true") }
     var showOnboarding by remember { mutableStateOf(backend.settings.preference("onboarding.seen") != "true") }
@@ -263,6 +244,25 @@ fun CodeAssistApp(
     val state = remember(backend, epoch) {
         IdeUiState(backend, composePreviewHost, initialGradleConvertPrompt = pendingGradleConvert)
     }
+    // DevHub "Add to project": writes the snippet's code into the directory of the currently open file (the
+    // predictable spot — the user is usually editing right where they want the snippet) and opens it. Only
+    // offered while a project file is open; the button is hidden otherwise.
+    val hubAddToProject: ((Snippet, SnippetImplementation) -> Unit)? =
+        if (state.active?.path != null) {
+            { snippet, impl ->
+                val dir = state.active?.path?.substringBeforeLast('/')?.takeIf { it.isNotBlank() }
+                if (dir != null) {
+                    val ext = when {
+                        impl.language.contains("xml", ignoreCase = true) -> "xml"
+                        impl.language.contains("java", ignoreCase = true) -> "java"
+                        else -> "kt"
+                    }
+                    val name = "Snippet_${snippet.id.replace(Regex("[^A-Za-z0-9_]", option = RegexOption.IGNORE_CASE), "_")}.$ext"
+                    val created = backend.files.createFile(dir, name, impl.code)
+                    if (created != null) state.openAt(created, 0)
+                }
+            }
+        } else null
     // Clear the one-shot after it's been baked into the (re-created) state, so navigating back to a project
     // later never re-triggers the convert prompt.
     LaunchedEffect(state) { if (pendingGradleConvert) pendingGradleConvert = false }
