@@ -1,11 +1,11 @@
 package dev.ide.ui.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -220,7 +220,7 @@ internal fun RightToolOverlay(state: IdeUiState, onSwipeOpen: (() -> Unit)? = nu
                         // incidental recompose (e.g. while the drawer slides).
                         AnimatedContent(
                             targetState = effectiveId,
-                            transitionSpec = { fadeIn(tween(Motion.BASE)) togetherWith fadeOut(tween(Motion.FAST)) },
+                            transitionSpec = { ContentTransform(fadeIn(tween(Motion.BASE)), fadeOut(tween(Motion.FAST)), sizeTransform = null) },
                             label = "rightPanelSwitch",
                             modifier = Modifier.weight(1f).fillMaxWidth(),
                         ) { id ->

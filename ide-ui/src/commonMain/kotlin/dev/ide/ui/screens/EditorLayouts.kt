@@ -2,10 +2,10 @@ package dev.ide.ui.screens
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -440,7 +440,7 @@ internal fun CompactLayout(
                         val selectedId = state.selectedLeftPanel ?: leftPanels.firstOrNull()?.id
                         AnimatedContent(
                             targetState = selectedId,
-                            transitionSpec = { fadeIn(tween(Motion.BASE)) togetherWith fadeOut(tween(Motion.FAST)) },
+                            transitionSpec = { ContentTransform(fadeIn(tween(Motion.BASE)), fadeOut(tween(Motion.FAST)), sizeTransform = null) },
                             label = "drawerPanelSwitch",
                             modifier = Modifier.weight(1f).fillMaxWidth(),
                         ) { id ->

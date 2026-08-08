@@ -2,6 +2,7 @@ package dev.ide.ui.components
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -14,7 +15,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -237,10 +237,13 @@ fun SidebarPane(
                             val fromIdx = panels.indexOfFirst { it.id == initialState }
                             val toIdx = panels.indexOfFirst { it.id == targetState }
                             val dir = if (toIdx >= fromIdx) 1 else -1
-                            (fadeIn(tween(Motion.BASE)) +
-                                slideInVertically(tween(Motion.BASE, easing = Motion.quiet)) { h -> dir * h / 14 }) togetherWith
-                                (fadeOut(tween(Motion.FAST)) +
-                                    slideOutVertically(tween(Motion.BASE, easing = Motion.quiet)) { h -> -dir * h / 14 })
+                            ContentTransform(
+                                targetContentEnter = fadeIn(tween(Motion.BASE)) +
+                                    slideInVertically(tween(Motion.BASE, easing = Motion.quiet)) { h -> dir * h / 14 },
+                                initialContentExit = fadeOut(tween(Motion.FAST)) +
+                                    slideOutVertically(tween(Motion.BASE, easing = Motion.quiet)) { h -> -dir * h / 14 },
+                                sizeTransform = null,
+                            )
                         },
                         label = "sidebarPanelSwitch",
                         modifier = Modifier.weight(1f),
