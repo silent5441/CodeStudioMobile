@@ -9,7 +9,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.ide.ui.Screen
@@ -57,7 +56,10 @@ private fun androidx.compose.animation.AnimatedContentTransitionScope<Screen>.mo
             easing = Motion.quiet
         )
     ) { w -> -dir * w / 4 } + fadeOut(tween(Motion.BASE, easing = Motion.soft))
-    return enter togetherWith exit
+    // Every screen fills the same viewport, so there is nothing to size-transform. The default
+    // SizeTransform measures the incoming content with unbounded constraints mid-crossfade, which
+    // makes any scrollable/lazy screen (DevHub's lists) crash on entry — disable it explicitly.
+    return ContentTransform(targetContentEnter = enter, initialContentExit = exit, sizeTransform = null)
 }
 
 /** Desktop fade-through + slight scale — non-directional, quick. */
@@ -74,5 +76,5 @@ private fun desktopFade(): ContentTransform {
             easing = Motion.soft
         ), targetScale = 0.98f
     )
-    return enter togetherWith exit
+    return ContentTransform(targetContentEnter = enter, initialContentExit = exit, sizeTransform = null)
 }
