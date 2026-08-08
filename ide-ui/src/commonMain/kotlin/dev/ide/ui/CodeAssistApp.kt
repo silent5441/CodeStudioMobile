@@ -624,13 +624,12 @@ fun CodeAssistApp(
                             onOpenRun = { screen = Screen.Run },
                             fileActions = fileActions,
                             // The editor's leftward edge swipe opens DevHub (when a store exists); the AI chat
-                            // is reached from the ⋮ menu via UiDestinations.AGENT.
+                            // is reached from the ⋮ menu via UiDestinations.AGENT — resolved through the plugin
+                            // tool-window registry (non-composable, unlike pluginPanels).
                             onOpenAgent = {
-                                state.selectedRightPanel = dev.ide.ui.components.pluginPanels(
-                                    dev.ide.ui.ext.ToolWindowAnchor.RIGHT,
-                                    state.backend,
-                                    state.active?.path,
-                                ).firstOrNull()?.id
+                                state.selectedRightPanel = dev.ide.ui.ext.ToolWindowRegistry
+                                    .forAnchor(dev.ide.ui.ext.ToolWindowAnchor.RIGHT)
+                                    .firstOrNull { it.id.startsWith("agent") }?.id
                             },
                             onOpenDevHub = { if (hubState != null) screen = Screen.DevHub },
                         )
