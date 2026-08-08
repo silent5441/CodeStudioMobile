@@ -245,7 +245,7 @@ class HubStoreImpl(
         }
     }
 
-    private fun mergeRemote(remote: HubCatalog) {
+    private fun mergeRemote(remoteCatalog: HubCatalog) {
         val currentById = cached?.snippets ?: run {
             val fromDisk = runCatching {
                 val f = catalogFile()
@@ -253,17 +253,17 @@ class HubStoreImpl(
             }.getOrDefault(emptyList())
             fromDisk
         }
-        val remoteById = remote.snippets.associateBy { it.id }
+        val remoteById = remoteCatalog.snippets.associateBy { it.id }
         val currentBy = currentById.associateBy { it.id }
         val merged = (currentBy + remoteById)
         val ordered = currentById.mapNotNull { merged[it.id] } +
             remoteById.values.filter { it.id !in currentBy }
 
         val catalog = HubCatalog(
-            schema = remote.schema,
-            meta = remote.meta,
+            schema = remoteCatalog.schema,
+            meta = remoteCatalog.meta,
             snippets = ordered,
-            dependencies = if (remote.dependencies.isNotEmpty()) remote.dependencies else (cached?.dependencies ?: emptyList()),
+            dependencies = if (remoteCatalog.dependencies.isNotEmpty()) remoteCatalog.dependencies else (cached?.dependencies ?: emptyList()),
         )
         cached = catalog
         remote = true
