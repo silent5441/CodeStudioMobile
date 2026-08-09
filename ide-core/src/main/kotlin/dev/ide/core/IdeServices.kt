@@ -214,6 +214,8 @@ import dev.ide.preview.impl.ProjectPreviewResources
 import dev.ide.preview.impl.RealViewRequest
 import dev.ide.preview.impl.RealViewResult
 import dev.ide.preview.impl.RealViewRuntime
+import dev.ide.core.customize.mergeSnippetBlocks
+import dev.ide.ui.backend.EditorBlocks
 import dev.ide.ui.backend.IndexUiBuildStats
 import dev.ide.ui.backend.IndexUiStatus
 import dev.ide.ui.backend.IndexWorkItem
@@ -1489,12 +1491,16 @@ class IdeServices private constructor(
     /** The user's live-template macro additions/overrides/disables for [languageId] (null = every language) —
      *  the global set overlaid by the project set, disabled entries kept (the completion contributor removes
      *  those). The shipped built-ins are NOT included (the language backends emit those). Read from the same
-     *  files the customization backend writes ([EditorCustomizationStore.standard]); stateless + read-through. */
+     *  files the customization backend writes ([EditorCustomizationStore.standard]); stateless + read-through.
+     *  The host's DevHub catalog is merged in as additional blocks ([mergeSnippetBlocks]). */
     fun userMacros(languageId: String?): List<dev.ide.core.customize.MacroDef> =
-        dev.ide.core.customize.EditorCustomizationStore.standard(
-            globalDir = { sharedCachesRoot },
-            projectRoot = { workspaceRoot },
-        ).userMacros(languageId)
+        mergeSnippetBlocks(
+            base = dev.ide.core.customize.EditorCustomizationStore.standard(
+                globalDir = { sharedCachesRoot },
+                projectRoot = { workspaceRoot },
+            ).userMacros(languageId),
+            blocks = EditorBlocks.source?.invoke(languageId) ?: emptyList(),
+        )
 
     /** The model's current revision (bumped on every model commit). A separate-process build runner passes
      *  this to the daemon so it reloads `module.toml` from disk when the model changed since it last opened

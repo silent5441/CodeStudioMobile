@@ -47,6 +47,7 @@ import androidx.compose.ui.window.PopupProperties
 import dev.ide.ui.backend.IdeBackend
 import dev.ide.ui.components.clipForClipboard
 import dev.ide.ui.backend.UiCompletionItem
+import dev.ide.ui.backend.UiSnippetBlock
 import dev.ide.ui.backend.UiAction
 import dev.ide.ui.backend.UiNavKind
 import dev.ide.ui.backend.UiNavOption
@@ -136,6 +137,13 @@ fun CodeEditor(
      * TOP of that overlay, so they're torn down while obscured — even when the overlay doesn't steal focus.
      */
     obscured: Boolean = false,
+    /**
+     * A DevHub block picked from the host palette: non-null = "insert now". [onPendingBlockHandled] fires
+     * after the insert so the host can clear the value; a bare (stop-less) template pastes as plain text,
+     * a templated one starts the editor's snippet session at the caret (Tab steps the placeholders).
+     */
+    pendingBlock: UiSnippetBlock? = null,
+    onPendingBlockHandled: (() -> Unit)? = null,
 ) {
     // Source code is intrinsically left-to-right: the gutter sits at the left edge and lines flow right. On an
     // RTL system locale Compose flips `LocalLayoutDirection`, which would mirror the text shaping + popup
@@ -164,6 +172,8 @@ fun CodeEditor(
             wrapIndent,
             fontLigatures,
             obscured,
+            pendingBlock,
+            onPendingBlockHandled,
         )
     }
 }
@@ -192,6 +202,8 @@ private fun CodeEditorContent(
     wrapIndent: Boolean = true,
     fontLigatures: Boolean = true,
     obscured: Boolean = false,
+    pendingBlock: UiSnippetBlock? = null,
+    onPendingBlockHandled: (() -> Unit)? = null,
 ) {
     val colors = Ca.colors
     val scope = rememberCoroutineScope()
@@ -380,9 +392,23 @@ private fun CodeEditorContent(
         }
     }
 
-    // Accept [picked], or — for the keyboard path — the currently-selected item. Callers that already know the
-    // item (a click/tap on a row) MUST pass it: `safeSelected` is captured at composition time, so a same-frame
-    // `selected = …; accept()` would still read the stale selection.
+    // A DevHub block picked from the palette: paste its template text at the caret as plain text — the
+    // no-stops case rides the same viewport-stable edit path as a completion accept — and, when the template
+    // declares tab stops, hand off to the editor's snippet session so Tab/Shift-Tab step the placeholders.
+    fun insertPendingBlock(block: UiSnippetBlock) {
+        val parsed = parseSnippetTemplate(block.template)
+        val caret = editorSession.selection.start
+        val anchorLine = editorSession.doc.lineForOffset(caret)
+        val edit = RangeEdit(caret, caret, parsed.text)
+        val snip = parsed.snippet
+        applyEditsKeepingViewport(
+            listOf(edit),
+            if (snip == null) TextRange(caret + parsed.text.length) else TextRange(caret),
+            anchorLine,
+        )
+        if (snip != null) snippet = SnippetSession.start(editorSession, caret, snip)
+    }
+
     fun accept(picked: UiCompletionItem? = null) {
         val s = liveCompletion ?: return
         val item = picked ?: displayed.getOrNull(safeSelected) ?: return
@@ -577,6 +603,14 @@ private fun CodeEditorContent(
     LaunchedEffect(findEpoch) { if (findEpoch > 0) find.openBar(replace = false) }
     LaunchedEffect(formatEpoch) { if (formatEpoch > 0) runFormat(0, 0) }
     LaunchedEffect(optimizeImportsEpoch) { if (optimizeImportsEpoch > 0) runOptimizeImports() }
+
+    // A block picked from the DevHub palette: pasted at the caret on the next frame; the host clears the
+    // value through [onPendingBlockHandled] once handled (kicking this effect for a future pick of the same block).
+    LaunchedEffect(pendingBlock) {
+        val block = pendingBlock ?: return@LaunchedEffect
+        insertPendingBlock(block)
+        onPendingBlockHandled?.invoke()
+    }
 
     // recompute find matches when the query/options change or the buffer edits (debounced).
     LaunchedEffect(find.open, find.query, find.options, editorSession.textRevision) {

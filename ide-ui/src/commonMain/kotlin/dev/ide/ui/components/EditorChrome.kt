@@ -172,6 +172,9 @@ fun EditorTopBar(
     onFind: () -> Unit = {},
     onReformat: () -> Unit = {},
     onOptimizeImports: () -> Unit = {},
+    /** DevHub Blocks: opens the block-palette sheet for the active file (only when [hasBlocks]). */
+    onOpenBlocks: () -> Unit = {},
+    hasBlocks: Boolean = false,
     onToggleConsole: () -> Unit = {},
     consoleOpen: Boolean = false,
     /** Compact (phone) top bar only: a single button opening the RIGHT tool-window drawer — the phone has no
@@ -239,6 +242,8 @@ fun EditorTopBar(
                     onFind = onFind,
                     onReformat = onReformat,
                     onOptimizeImports = onOptimizeImports,
+                    onOpenBlocks = onOpenBlocks,
+                    hasBlocks = hasBlocks,
                     inlayHintsOn = inlayHintsOn,
                     onToggleInlayHints = onToggleInlayHints,
                     consoleOpen = consoleOpen,
@@ -261,6 +266,7 @@ fun EditorTopBar(
                     IconButtonCa(CaIcons.search, stringResource(Res.string.edchrome_find_replace), onFind)
                     IconButtonCa(CaIcons.braces, stringResource(Res.string.edchrome_reformat_code), onReformat)
                 }
+                if (hasBlocks) IconButtonCa(CaIcons.box, stringResource(Res.string.edblocks_open), onOpenBlocks)
                 IconButtonCa(CaIcons.command, stringResource(Res.string.edchrome_command_palette), onOpenPalette)
                 IconButtonCa(
                     CaIcons.eye,
@@ -384,6 +390,9 @@ private fun EditorOverflowMenu(
     onFind: () -> Unit,
     onReformat: () -> Unit,
     onOptimizeImports: () -> Unit,
+    /** DevHub Blocks entry (compact only): shows only when the active file has blocks to offer. */
+    onOpenBlocks: () -> Unit = {},
+    hasBlocks: Boolean = false,
     inlayHintsOn: Boolean,
     onToggleInlayHints: () -> Unit,
     consoleOpen: Boolean,
@@ -412,6 +421,7 @@ private fun EditorOverflowMenu(
                 OverflowItem(CaIcons.search, stringResource(Res.string.edchrome_find_replace)) { open = false; onFind() }
                 OverflowItem(CaIcons.braces, stringResource(Res.string.edchrome_reformat_code)) { open = false; onReformat() }
                 OverflowItem(CaIcons.layers, stringResource(Res.string.edchrome_optimize_imports)) { open = false; onOptimizeImports() }
+                if (hasBlocks) OverflowItem(CaIcons.box, stringResource(Res.string.edblocks_open)) { open = false; onOpenBlocks() }
             }
             OverflowItem(CaIcons.command, stringResource(Res.string.edchrome_command_palette)) { open = false; onOpenPalette() }
             // The AI assistant panel — a toggle, its on-state accented like the other tool windows.

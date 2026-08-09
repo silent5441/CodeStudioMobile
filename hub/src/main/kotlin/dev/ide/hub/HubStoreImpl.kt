@@ -1,5 +1,6 @@
 package dev.ide.hub
 
+import dev.ide.hub.model.Block
 import dev.ide.hub.model.DependencyInfo
 import dev.ide.hub.model.HubCatalog
 import dev.ide.hub.model.Snippet
@@ -113,6 +114,13 @@ class HubStoreImpl(
         }
     }
 
+    override suspend fun blocks(language: String?): List<Block> {
+        val all = catalog().blocks
+        return all
+            .filter { language == null || it.languages.isEmpty() || language in it.languages }
+            .sortedBy { it.trigger.ifBlank { it.name }.lowercase() }
+    }
+
     private fun loadSeed(): HubCatalog? = try {
         javaClass.classLoader?.getResourceAsStream(seedResource)?.use { stream ->
             runCatching { json.decodeFromString<HubCatalog>(stream.readBytes().decodeToString()) }.getOrNull()
@@ -152,9 +160,25 @@ class HubStoreImpl(
                 schema = current.schema,
                 meta = current.meta,
                 snippets = current.snippets.filterNot { it.id == snippet.id } + snippet,
+                blocks = current.blocks,
                 dependencies = current.dependencies + extraDependencies.filterNot { dep ->
                     current.dependencies.any { it.groupId == dep.groupId && it.artifactId == dep.artifactId }
                 },
+            )
+            cached = merged
+            persistCatalog(merged)
+        }
+    }
+
+    override fun addBlock(block: Block) {
+        synchronized(this) {
+            val current = cached ?: HubCatalog()
+            val merged = HubCatalog(
+                schema = current.schema,
+                meta = current.meta,
+                snippets = current.snippets,
+                blocks = current.blocks.filterNot { it.id == block.id } + block,
+                dependencies = current.dependencies,
             )
             cached = merged
             persistCatalog(merged)

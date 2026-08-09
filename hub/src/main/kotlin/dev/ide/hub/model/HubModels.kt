@@ -46,12 +46,31 @@ data class DependencyInfo(
     }
 }
 
-/** The full remote-catalog envelope: snippets + the dependency table + metadata. */
+/**
+ * A DevHub code block: a live template the editor pastes at the caret as plain text when picked (and then
+ * drives its tab stops — `$1`…, `${1:default}`, `$0`/`$END$` — via the existing snippet machinery). The
+ * catalog's block set is what the editor's completion merges in as extra "user macros"; [trigger] is the
+ * abbreviation shown in the completion popup, [languages] gates it to language ids (empty = every language).
+ */
+@Serializable
+data class Block(
+    val id: String,
+    val name: String,
+    val description: String = "",
+    val languages: List<String> = emptyList(),
+    val trigger: String = "",
+    val template: String = "",
+    val createdAt: Long = 0L,
+    val updatedAt: Long = 0L,
+)
+
+/** The full remote-catalog envelope: snippets + code blocks + the dependency table + metadata. */
 @Serializable
 data class HubCatalog(
     val schema: Int = 1,
     val meta: CatalogMeta = CatalogMeta(),
     val snippets: List<Snippet> = emptyList(),
+    val blocks: List<Block> = emptyList(),
     val dependencies: List<DependencyInfo> = emptyList(),
 )
 

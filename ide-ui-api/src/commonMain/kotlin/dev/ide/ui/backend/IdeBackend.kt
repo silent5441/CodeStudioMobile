@@ -1223,6 +1223,30 @@ data class UiTextEdit(val start: Int, val end: Int, val newText: String)
  */
 data class UiCaret(val offset: Int, val selectionLength: Int = 0)
 
+/**
+ * A DevHub code block offered to the editor as a live template: picking it pastes [template] at the caret as
+ * plain text and the editor drives its tab stops (`$1`…, `${1:default}`, `$0`/`$END$` — the snippet grammar
+ * of [dev.ide.lang.template.Snippet]). [trigger] is the abbreviation shown in the completion popup; [languages]
+ * gates the block to language ids (empty = every language).
+ */
+data class UiSnippetBlock(
+    val name: String,
+    val trigger: String,
+    val languages: List<String> = emptyList(),
+    val template: String,
+    val description: String = "",
+)
+
+/**
+ * The editor-side bridge for hub blocks: a host with a DevHub store publishes its block catalog here (once,
+ * at app composition); the completion engine merges it into the live-template contributors on every pass.
+ * The mutable var is written at app init and read on engine threads — a torn read resolves to null or a
+ * stale value, which is benign: blocks simply don't surface until the next completion pass.
+ */
+object EditorBlocks {
+    var source: ((languageId: String?) -> List<UiSnippetBlock>)? = null
+}
+
 /** Items already ranked; [replaceStart]..[replaceEnd] is the partial identifier an accept replaces. */
 data class UiCompletionResult(
     val items: List<UiCompletionItem>,

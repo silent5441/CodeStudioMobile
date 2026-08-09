@@ -35,6 +35,7 @@ import dev.ide.ui.ads.AdController
 import dev.ide.ui.ads.BuildAdInterstitial
 import dev.ide.ui.ads.LocalAds
 import dev.ide.ui.backend.AdHost
+import dev.ide.ui.backend.EditorBlocks
 import dev.ide.ui.backend.FileActions
 import dev.ide.ui.backend.IdeBackend
 import dev.ide.hub.HubStoreImpl
@@ -193,6 +194,13 @@ fun CodeAssistApp(
     var hubSnippet by remember { mutableStateOf<Snippet?>(null) }
     var hubDependency by remember { mutableStateOf<DependencyInfo?>(null) }
     var showMigration by remember { mutableStateOf(backend.settings.preference("migration.acknowledged") != "true") }
+
+    // Publish the hub's code blocks into the editor's completion bridge: the engine merges them into the
+    // live-template macros on the next completion pass, so authored/catalog blocks appear as typed
+    // abbreviations in the popup and, when picked, paste at the caret as text with tab stops driven.
+    LaunchedEffect(hubState) {
+        EditorBlocks.source = if (hubState == null) null else hubState::blocks
+    }
     var showLegacyRecovery by remember { mutableStateOf(backend.settings.preference("legacy.recovery.seen") != "true") }
     var showOnboarding by remember { mutableStateOf(backend.settings.preference("onboarding.seen") != "true") }
     // Opt-in analytics: prompt only when collection is available and the user hasn't decided yet (null). The

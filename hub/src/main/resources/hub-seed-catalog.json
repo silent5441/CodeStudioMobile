@@ -910,5 +910,91 @@
       "repository": "Google Maven",
       "license": "Apache-2.0"
     }
+  ],
+  "blocks": [
+    {
+      "id": "blk-lc",
+      "name": "LazyColumn",
+      "description": "A scrollable vertical list with items()",
+      "languages": [
+        "kotlin"
+      ],
+      "trigger": "lc",
+      "template": "LazyColumn(\n    modifier = Modifier.${1:modifier},\n) {\n    items(${2:items}) { ${3:item} ->\n        ${0}\n    }\n}\n",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-mkv",
+      "name": "mutableStateOf + remember",
+      "description": "Compose state that survives recomposition",
+      "languages": [
+        "kotlin"
+      ],
+      "trigger": "mkv",
+      "template": "val ${1:name} = remember { mutableStateOf(${2:initial}) }",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-rs",
+      "name": "rememberSaveable state",
+      "description": "State that survives activity recreation",
+      "languages": [
+        "kotlin"
+      ],
+      "trigger": "rs",
+      "template": "val ${1:name} = rememberSaveable { mutableStateOf(${2:initial}) }",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-sc",
+      "name": "rememberCoroutineScope",
+      "description": "A scope to launch coroutines inside a composable",
+      "languages": [
+        "kotlin"
+      ],
+      "trigger": "cscope",
+      "template": "val ${1:scope} = rememberCoroutineScope()",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-tx",
+      "name": "Text composable",
+      "description": "A Text with a style placeholder",
+      "languages": [
+        "kotlin"
+      ],
+      "trigger": "txt",
+      "template": "Text(\n    text = ${1:text},\n    style = ${2:style},\n)",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-fori",
+      "name": "indexed for loop",
+      "description": "for (int i = 0; …); the counter is one linked placeholder",
+      "languages": [
+        "java"
+      ],
+      "trigger": "fori",
+      "template": "for (int ${1:i} = 0; $1 < ${2:n}; $1++) {\n    ${0}\n}\n",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-fl",
+      "name": "enhanced for loop",
+      "description": "foreach over a collection",
+      "languages": [
+        "java"
+      ],
+      "trigger": "fore",
+      "template": "for (${1:type} ${2:e} : ${3:items}) {\n    ${0}\n}\n",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    }
   ]
 }

@@ -22,6 +22,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.ide.hub.ui.components.HubChip
 import kotlinx.coroutines.launch
@@ -44,6 +45,8 @@ fun AddSnippetContent(
     var dependencyText by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
     var language by remember { mutableStateOf("kotlin") }
+    var blockMode by remember { mutableStateOf(false) }
+    var trigger by remember { mutableStateOf("") }
     var saving by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -53,22 +56,32 @@ fun AddSnippetContent(
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
             TextButton(onClick = onCancel, enabled = !saving) { Text("Cancel") }
             Spacer(Modifier.weight(1f))
-            Text("Add Snippet", style = MaterialTheme.typography.titleMedium)
+            Text(if (blockMode) "Add Block" else "Add Snippet", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.weight(1f))
             TextButton(
                 onClick = {
                     saving = true
                     scope.launch {
-                        val ok = state.addLocalSnippet(
-                            title = title,
-                            description = description,
-                            category = category,
-                            tags = tagsText.split(",").map { it.trim() }.filter { it.isNotEmpty() },
-                            language = language,
-                            technology = language.replaceFirstChar { it.uppercase() },
-                            code = code,
-                            dependency = dependencyText,
-                        )
+                        val ok = if (blockMode) {
+                            state.addLocalBlock(
+                                title = title,
+                                description = description,
+                                language = language,
+                                trigger = trigger,
+                                template = code,
+                            )
+                        } else {
+                            state.addLocalSnippet(
+                                title = title,
+                                description = description,
+                                category = category,
+                                tags = tagsText.split(",").map { it.trim() }.filter { it.isNotEmpty() },
+                                language = language,
+                                technology = language.replaceFirstChar { it.uppercase() },
+                                code = code,
+                                dependency = dependencyText,
+                            )
+                        }
                         if (ok) onSaved()
                         else saving = false
                     }
@@ -100,6 +113,43 @@ fun AddSnippetContent(
                         language = lang
                     }
                 }
+            }
+            if (blockMode) {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    HubChip(label = "Block", selected = blockMode) { blockMode = true }
+                    HubChip(label = "Snippet", selected = !blockMode) { blockMode = false }
+                    Text(
+                        "Live-template block: pick it in the editor → pastes at the caret",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                OutlinedTextField(
+                    value = trigger,
+                    onValueChange = { trigger = it },
+                    label = { Text("Trigger (completion abbreviation, e.g. lc)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    "Template markers: \$1, \$2 … tab stops · \${1:default} · \$0/\$END\$ final caret · \$\$ literal \$",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                Text(
+                    "To make a block (pastes at the cursor in the editor) use the Block toggle below the language row",
+                    textAlign = TextAlign.End,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
             OutlinedTextField(
                 value = description,

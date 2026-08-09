@@ -1,12 +1,14 @@
 package dev.ide.hub.ui
 
 /**
- * The bundled DevHub seed catalog, guaranteed-available copy. The primary store path reads it as a Compose
- * resource (packaged with the app); some packaging situations can drop that asset, so this plain-text constant
- * is the unconditional fallback — it is never "missing" because it is part of the compiled code itself.
+ * The bundled DevHub seed catalog, guaranteed-available copy. The primary store path reads it as a
+ * classpath resource (packaged with the app); some packaging situations can drop that asset, so this
+ * plain-text copy is the unconditional fallback — it is never "missing" because it is part of the
+ * compiled code itself.
  * (Escape note: `$` in the JSON is written as `${$}` in the raw string below.)
  */
-const val EMBEDDED_CATALOG_JSON: String = """{
+const val EMBEDDED_CATALOG_JSON: String = """
+{
   "schema": 1,
   "meta": {
     "title": "Code Studio DevHub",
@@ -351,7 +353,7 @@ const val EMBEDDED_CATALOG_JSON: String = """{
         {
           "language": "kotlin",
           "technology": "Android",
-          "code": "private val launcher = registerForActivityResult(\n    ActivityResultContracts.RequestMultiplePermissions()\n) { grants ->\n    if (grants.values.all { it }) startLocationTracking()\n    else Toast.makeText(this, \"Location needed to continue\", Toast.LENGTH_LONG).show()\n}\n\nfun requestLocationPermission() {\n    launcher.launch(arrayOf(\n        Manifest.permission.ACCESS_FINE_LOCATION,\n        Manifest.permission.ACCESS_COARSE_LOCATION\n    ))\n}\n\n// If denied twice — open app settings\nfun openAppSettings() {\n    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {\n        data = Uri.parse(\"package:${'$'}{packageName}\")\n        startActivity(this)\n    }\n}"
+          "code": "private val launcher = registerForActivityResult(\n    ActivityResultContracts.RequestMultiplePermissions()\n) { grants ->\n    if (grants.values.all { it }) startLocationTracking()\n    else Toast.makeText(this, \"Location needed to continue\", Toast.LENGTH_LONG).show()\n}\n\nfun requestLocationPermission() {\n    launcher.launch(arrayOf(\n        Manifest.permission.ACCESS_FINE_LOCATION,\n        Manifest.permission.ACCESS_COARSE_LOCATION\n    ))\n}\n\n// If denied twice — open app settings\nfun openAppSettings() {\n    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {\n        data = Uri.parse(\"package:${$}{packageName}\")\n        startActivity(this)\n    }\n}"
         },
         {
           "language": "compose",
@@ -377,7 +379,7 @@ const val EMBEDDED_CATALOG_JSON: String = """{
         {
           "language": "kotlin",
           "technology": "Retrofit",
-          "code": "// model\n@Serializable data class User(val id: Int, val name: String)\n\n// service\ninterface ApiService {\n    @GET(\"users\")\n    suspend fun getUsers(): List<User>\n\n    @POST(\"users\") suspend fun createUser(@Body user: User): User\n}\n\n// client\nprivate val client = OkHttpClient.Builder()\n    .addInterceptor { chain ->\n        chain.proceed(\n            chain.request().newBuilder()\n                .header(\"Authorization\", \"Bearer ${'$'}token\")\n                .header(\"Accept\", \"application/json\")\n                .build()\n        )\n    }\n    .build()\n\nval api: ApiService = Retrofit.Builder()\n    .baseUrl(BuildConfig.API_URL)\n    .client(client)\n    .addConverterFactory(jsonConverterFactory)\n    .build()\n    .create(ApiService::class.java)\n\n// use in ViewModel\nval user = api.login(User(1, \"x\"))"
+          "code": "// model\n@Serializable data class User(val id: Int, val name: String)\n\n// service\ninterface ApiService {\n    @GET(\"users\")\n    suspend fun getUsers(): List<User>\n\n    @POST(\"users\") suspend fun createUser(@Body user: User): User\n}\n\n// client\nprivate val client = OkHttpClient.Builder()\n    .addInterceptor { chain ->\n        chain.proceed(\n            chain.request().newBuilder()\n                .header(\"Authorization\", \"Bearer ${$}token\")\n                .header(\"Accept\", \"application/json\")\n                .build()\n        )\n    }\n    .build()\n\nval api: ApiService = Retrofit.Builder()\n    .baseUrl(BuildConfig.API_URL)\n    .client(client)\n    .addConverterFactory(jsonConverterFactory)\n    .build()\n    .create(ApiService::class.java)\n\n// use in ViewModel\nval user = api.login(User(1, \"x\"))"
         }
       ],
       "dependencies": [
@@ -514,7 +516,7 @@ const val EMBEDDED_CATALOG_JSON: String = """{
         {
           "language": "kotlin",
           "technology": "Firebase",
-          "code": "// add firebase-common, firestore, auth to dependencies\n\n// Firestore write\nval doc = db.collection(\"users\").document(uid)\ndoc.set(mapOf(\"name\" to \"Ada\", \"level\" to 7))\n\n// Firestore read (reactive)\ndb.collection(\"users\")\n    .whereEqualTo(\"level\", 7)\n    .get()\n    .addOnSuccessListener { snap ->\n        snap.documents.forEach { d -> println(\"${'$'}{d.id} => ${'$'}{d.data}\") }\n    }\n\n// Realtime listener\ndb.collection(\"todos\").addSnapshotListener { snap, e ->\n    if (e != null) { Log.w(TAG, e) ; return@addSnapshotListener }\n    // rebuild your list\n}\n\n// Auth\nFirebaseAuth.getInstance()\n    .createUserWithEmailAndPassword(\"a@b.co\", \"secret\")\n    .addOnSuccessListener { result -> result.user?.uid }\n"
+          "code": "// add firebase-common, firestore, auth to dependencies\n\n// Firestore write\nval doc = db.collection(\"users\").document(uid)\ndoc.set(mapOf(\"name\" to \"Ada\", \"level\" to 7))\n\n// Firestore read (reactive)\ndb.collection(\"users\")\n    .whereEqualTo(\"level\", 7)\n    .get()\n    .addOnSuccessListener { snap ->\n        snap.documents.forEach { d -> println(\"${$}{d.id} => ${$}{d.data}\") }\n    }\n\n// Realtime listener\ndb.collection(\"todos\").addSnapshotListener { snap, e ->\n    if (e != null) { Log.w(TAG, e) ; return@addSnapshotListener }\n    // rebuild your list\n}\n\n// Auth\nFirebaseAuth.getInstance()\n    .createUserWithEmailAndPassword(\"a@b.co\", \"secret\")\n    .addOnSuccessListener { result -> result.user?.uid }\n"
         }
       ],
       "dependencies": [
@@ -918,5 +920,92 @@ const val EMBEDDED_CATALOG_JSON: String = """{
       "repository": "Google Maven",
       "license": "Apache-2.0"
     }
+  ],
+  "blocks": [
+    {
+      "id": "blk-lc",
+      "name": "LazyColumn",
+      "description": "A scrollable vertical list with items()",
+      "languages": [
+        "kotlin"
+      ],
+      "trigger": "lc",
+      "template": "LazyColumn(\n    modifier = Modifier.${$}{1:modifier},\n) {\n    items(${$}{2:items}) { ${$}{3:item} ->\n        ${$}{0}\n    }\n}\n",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-mkv",
+      "name": "mutableStateOf + remember",
+      "description": "Compose state that survives recomposition",
+      "languages": [
+        "kotlin"
+      ],
+      "trigger": "mkv",
+      "template": "val ${$}{1:name} = remember { mutableStateOf(${$}{2:initial}) }",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-rs",
+      "name": "rememberSaveable state",
+      "description": "State that survives activity recreation",
+      "languages": [
+        "kotlin"
+      ],
+      "trigger": "rs",
+      "template": "val ${$}{1:name} = rememberSaveable { mutableStateOf(${$}{2:initial}) }",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-sc",
+      "name": "rememberCoroutineScope",
+      "description": "A scope to launch coroutines inside a composable",
+      "languages": [
+        "kotlin"
+      ],
+      "trigger": "cscope",
+      "template": "val ${$}{1:scope} = rememberCoroutineScope()",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-tx",
+      "name": "Text composable",
+      "description": "A Text with a style placeholder",
+      "languages": [
+        "kotlin"
+      ],
+      "trigger": "txt",
+      "template": "Text(\n    text = ${$}{1:text},\n    style = ${$}{2:style},\n)",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-fori",
+      "name": "indexed for loop",
+      "description": "for (int i = 0; …); the counter is one linked placeholder",
+      "languages": [
+        "java"
+      ],
+      "trigger": "fori",
+      "template": "for (int ${$}{1:i} = 0; ${$}1 < ${$}{2:n}; ${$}1++) {\n    ${$}{0}\n}\n",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    },
+    {
+      "id": "blk-fl",
+      "name": "enhanced for loop",
+      "description": "foreach over a collection",
+      "languages": [
+        "java"
+      ],
+      "trigger": "fore",
+      "template": "for (${$}{1:type} ${$}{2:e} : ${$}{3:items}) {\n    ${$}{0}\n}\n",
+      "createdAt": 1786241975655,
+      "updatedAt": 1786241975655
+    }
   ]
-}"""
+}
+"""

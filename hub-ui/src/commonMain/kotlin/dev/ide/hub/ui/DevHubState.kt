@@ -6,10 +6,12 @@ import androidx.compose.runtime.setValue
 import dev.ide.hub.Filters
 import dev.ide.hub.HubStore
 import dev.ide.hub.SearchHit
+import dev.ide.hub.model.Block
 import dev.ide.hub.model.DependencyInfo
 import dev.ide.hub.model.HubCatalog
 import dev.ide.hub.model.Snippet
 import dev.ide.hub.model.SnippetImplementation
+import dev.ide.ui.backend.UiSnippetBlock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -169,5 +171,55 @@ class DevHubState(
             }
             true
         }.getOrDefault(false)
+    }
+
+    /** Author a live-template BLOCK on-device (the palette + completion path): merges into the catalog and
+     *  persists, then refreshes [catalog]. The template uses snippet syntax (`$1`… tab stops, `${2:default}`,
+     *  `$0` final caret, `$END$`); [language] maps "compose" to the kotlin gate. Returns true when saved. */
+    suspend fun addLocalBlock(
+        title: String,
+        description: String,
+        language: String,
+        trigger: String,
+        template: String,
+    ): Boolean {
+        val slug = title.trim().lowercase()
+            .replace(Regex("[^a-z0-9]+"), "-")
+            .trim('-')
+            .ifBlank { "block" }
+        val id = "$slug-${System.currentTimeMillis() % 1000}"
+        val block = Block(
+            id = id,
+            name = title.trim(),
+            description = description.trim(),
+            languages = listOf(if (language == "compose") "kotlin" else language),
+            trigger = trigger.trim().ifBlank { slug },
+            template = template.trim(),
+            createdAt = System.currentTimeMillis(),
+            updatedAt = System.currentTimeMillis(),
+        )
+        return runCatching {
+            withContext(Dispatchers.IO) {
+                store.addBlock(block)
+                catalog = store.catalog()
+            }
+            true
+        }.getOrDefault(false)
+    }
+
+    /** The catalog's code blocks as the editor consumes them: [language] gate (empty [Block.languages]
+     *  admits every language), abbreviation = trigger (`name` fallback). Read from the loaded snapshot so the
+     *  shell can publish it through [dev.ide.ui.backend.EditorBlocks] without an extra store read. */
+    fun blocks(language: String?): List<UiSnippetBlock> {
+        val c = catalog ?: return emptyList()
+        return c.blocks.map {
+            UiSnippetBlock(
+                name = it.name,
+                trigger = it.trigger.ifBlank { it.name },
+                languages = it.languages,
+                template = it.template,
+                description = it.description,
+            )
+        }.filter { language == null || it.languages.isEmpty() || language in it.languages }
     }
 }

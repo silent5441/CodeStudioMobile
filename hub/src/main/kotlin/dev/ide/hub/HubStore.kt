@@ -1,5 +1,6 @@
 package dev.ide.hub
 
+import dev.ide.hub.model.Block
 import dev.ide.hub.model.DependencyInfo
 import dev.ide.hub.model.HubCatalog
 import dev.ide.hub.model.Snippet
@@ -38,6 +39,10 @@ interface HubStore {
     /** The current catalog: offline seed merged with anything pulled from the remote sync URL. */
     suspend fun catalog(): HubCatalog
 
+    /** The catalog's code blocks: language-filtered when a language id is given (empty [Block.languages]
+     *  admits every language), ordered by abbreviation. What the editor merges as live-template macros. */
+    suspend fun blocks(language: String? = null): List<Block>
+
     /** Global search across title, description, code, tags, category, technology and dependency names. */
     suspend fun search(query: String, filters: Filters): List<SearchHit>
 
@@ -70,6 +75,9 @@ interface HubStore {
     /** Adds (or replaces, by id) a snippet authored on-device, plus any new dependencies, merging it into
      *  the local catalog and persisting. The change is visible to every DevHub screen immediately. */
     fun addSnippet(snippet: Snippet, extraDependencies: List<DependencyInfo> = emptyList())
+
+    /** Adds (or replaces, by id) a live-template block authored on-device, persisting the catalog. */
+    fun addBlock(block: Block)
 
     /** Human-readable outcome of the last [importSeed] attempt (decode result / exception). */
     val lastImportDetail: String?

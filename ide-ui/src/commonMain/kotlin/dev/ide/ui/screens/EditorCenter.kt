@@ -22,13 +22,17 @@ import dev.ide.ui.EditorViewMode
 import dev.ide.ui.IdeUiState
 import dev.ide.ui.OpenFile
 import dev.ide.ui.actions.dispatchAction
+import dev.ide.ui.backend.EditorBlocks
 import dev.ide.ui.backend.IndexUiStatus
 import dev.ide.ui.backend.UiActionContext
 import dev.ide.ui.backend.UiActionPlaces
+import dev.ide.ui.backend.UiSnippetBlock
+import dev.ide.ui.components.BlockPaletteSheet
 import dev.ide.ui.components.DepsProgressBar
 import dev.ide.ui.components.EditorTopBar
 import dev.ide.ui.components.NoOpenFilesView
 import dev.ide.ui.components.TabsStrip
+import dev.ide.ui.components.blocksForPath
 import dev.ide.ui.editor.BlockEditor
 import dev.ide.ui.editor.CodeEditor
 import dev.ide.ui.editor.engine.DaemonPass
@@ -89,6 +93,12 @@ internal fun EditorCenter(
     // PREVIEWS pass below — no separate detection effect.
     var hasPreview by remember(state.active?.path) { mutableStateOf(false) }
     val active = state.active
+    // DevHub block palette: [availableBlocks] is the active file's language-gated blocks (recomputed per
+    // recomposition — the hub catalog loads asynchronously, so the toolbar button appears when it's ready);
+    // picking one hands it to the editor, which pastes it at the caret on its next frame.
+    val availableBlocks = blocksForPath(active?.path, EditorBlocks.source)
+    var blocksOpen by remember { mutableStateOf(false) }
+    var pendingBlock by remember { mutableStateOf<UiSnippetBlock?>(null) }
     // Bumped by the Find button (top bar) to open the editor's in-file find bar (Ctrl/⌘-F is the keyboard path).
     var findEpoch by remember(active?.path) { mutableStateOf(0) }
     // Bumped by the Reformat button (top bar) to reformat the active file (Ctrl/⌘-Alt-L is the keyboard path).
@@ -156,6 +166,8 @@ internal fun EditorCenter(
                 onFind = { if (active != null) findEpoch++ },
                 onReformat = { if (active != null) formatEpoch++ },
                 onOptimizeImports = { if (active != null) optimizeImportsEpoch++ },
+                onOpenBlocks = { blocksOpen = true },
+                hasBlocks = availableBlocks.isNotEmpty(),
                 onToggleConsole = { state.consoleOpen = !state.consoleOpen },
                 consoleOpen = state.consoleOpen,
                 rightToolIconId = rightPrimary?.iconId,
@@ -253,6 +265,8 @@ internal fun EditorCenter(
                         wordWrap = state.wordWrapEnabled,
                         wrapIndent = state.wrapIndentEnabled,
                         fontLigatures = state.fontLigaturesEnabled,
+                        pendingBlock = pendingBlock,
+                        onPendingBlockHandled = { pendingBlock = null },
                         // Tapping a @Preview gutter icon switches this tab to the Preview surface, rendering that
                         // specific composable. The editor tools (incl. the Code/Blocks/Preview switch) are pinned
                         // to the breadcrumb row, so they're already visible — making the view change easy to undo.
@@ -323,6 +337,14 @@ internal fun EditorCenter(
                 NoOpenFilesView(Modifier.weight(1f).fillMaxWidth())
             }
         }
+        if (blocksOpen) BlockPaletteSheet(
+            blocks = availableBlocks,
+            onPick = { b ->
+                pendingBlock = b
+                blocksOpen = false
+            },
+            onDismiss = { blocksOpen = false },
+        )
     }
 }
 
