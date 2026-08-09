@@ -3,6 +3,7 @@ package dev.ide.ui.screens
 import dev.ide.ui.theme.Ide
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -169,7 +170,9 @@ fun LessonPlayerScreen(
                             slideInHorizontally(tween(Motion.BASE, easing = Motion.soft)) { w -> (if (forward) w else -w) / 5 }
                         val exit = fadeOut(tween(Motion.FAST)) +
                             slideOutHorizontally(tween(Motion.BASE, easing = Motion.soft)) { w -> (if (forward) -w else w) / 5 }
-                        enter togetherWith exit
+                        // sizeTransform = null: lesson steps can contain scrollable code views, and the
+                        // default size-transform measures the incoming step with unbounded height (crash).
+                        ContentTransform(enter, exit, sizeTransform = null)
                     },
                     label = "lesson-step",
                     modifier = Modifier.fillMaxSize(),
